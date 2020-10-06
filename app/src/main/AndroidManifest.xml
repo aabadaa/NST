@@ -11,6 +11,7 @@
         <activity android:name=".NoteActivity" />
         <activity
             android:name=".OnFLyActivity"
+            android:excludeFromRecents="true"
             android:finishOnCloseSystemDialogs="false"
             android:showWhenLocked="true"
             android:theme="@style/Dialog">

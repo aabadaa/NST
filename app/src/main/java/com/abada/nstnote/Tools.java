@@ -5,11 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.view.ContextThemeWrapper;
-import android.widget.ArrayAdapter;
-
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class Tools {
     public static AlertDialog AskOption(final Context context, final NoteAdapter arrayAdapter, final int position)
@@ -23,9 +19,10 @@ public class Tools {
                 .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        Note note=arrayAdapter.getItem(position);
-                        new IOManager(context).deleteNote(note);
-                        arrayAdapter.remove(arrayAdapter.getItem(position));
+                        Note note = arrayAdapter.getItem(position);
+                        arrayAdapter.removeItem(position);
+                        IOManager iom = new IOManager(context);
+                        iom.deleteNote(note);
                         dialog.dismiss();
                     }
 

@@ -1,7 +1,5 @@
 package com.abada.nstnote;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,14 +7,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class OnFLyActivity extends AppCompatActivity {
     public final String TAG=this.getClass().getName();
     Button save,cancel;
     EditText note;
-    String toastText="";
+    String toastText = "";
+    NoteAdapter noteAdapter = MainActivity.noteAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,13 +30,18 @@ public class OnFLyActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "onClick: ");
-                toastText="Saved";
-                IOManager iom=new IOManager(OnFLyActivity.this);
-                Note newNote=new Note(note.getText().toString());
-                if(newNote.getBody().isEmpty())
-                    toastText="Canceled";
-                else
+                toastText = "Saved";
+                IOManager iom = new IOManager(OnFLyActivity.this);
+                Note newNote = new Note(note.getText().toString());
+                if (newNote.getBody().isEmpty()) {
+                    toastText = "Canceled";
+                } else {
                     iom.writeNote(newNote);
+                    try {
+                        noteAdapter.addItem(-1, newNote);
+                    } catch (Exception e) {
+                    }
+                }
                 OnFLyActivity.this.onBackPressed();
             }
         });

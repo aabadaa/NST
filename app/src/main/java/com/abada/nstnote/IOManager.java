@@ -1,7 +1,6 @@
 package com.abada.nstnote;
 
 import android.content.Context;
-import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -15,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.regex.Pattern;
 
 public class IOManager {
     Context context;
@@ -56,7 +54,7 @@ public class IOManager {
                 header=filename;
             }
             while (line != null) {
-                body.append(line).append('\n');
+                body.append(line + "\n");
                 line = reader.readLine();
             }
         } catch (IOException e) {
@@ -66,7 +64,7 @@ public class IOManager {
         }
     }
 
-    public ArrayList<Note> getNotes() throws FileNotFoundException {
+    public ArrayList<Note> getNotes() {
         Log.i(TAG, "getNotes: ");
         File directory = context.getFilesDir();
         File[] files = directory.listFiles();
@@ -77,8 +75,13 @@ public class IOManager {
             dates[i] = files[i].getName();
         }
         ArrayList<Note> out = new ArrayList<>();
-        for (int i = 0; i < dates.length; i++)
-            out.add(readNote(dates[i]));
+        for (int i = 0; i < dates.length; i++) {
+            try {
+                out.add(readNote(dates[i]));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         return out;
     }
 

@@ -3,15 +3,15 @@ package com.abada.nstnote;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 public class Note implements Parcelable {
-    private String header="", body="";
+    public static final String DELETE = "delete", POSITION = "position", NEW = "new", HEADER = "header", DATE = "date";
+    private String header = "", body = "";
     private String date;
-    boolean checked=false;
+    boolean checked = false;
     public static final Creator<Note> CREATOR = new Creator<Note>() {
         @Override
         public Note createFromParcel(Parcel in) {
@@ -24,6 +24,9 @@ public class Note implements Parcelable {
         }
     };
 
+    {
+
+    }
     public Note() {}
     public Note(String body){
         this.body=body;
@@ -78,8 +81,20 @@ public class Note implements Parcelable {
         dest.writeString(body);
         dest.writeString(date);
     }
+
     @Override
-    public String toString(){
-        return header+"\t\n"+body;
+    public String toString() {
+        return header + "\t\n" + body;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        Note o = (Note) other;
+        return header.equals(o.getHeader()) && body.equals(o.getBody()) && date.equals(o.getDate());
+    }
+
+    public boolean equalsIgnoreDate(Object other) {
+        Note o = (Note) other;
+        return header.equals(o.getHeader()) && body.equals(o.getBody());
     }
 }
