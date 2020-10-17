@@ -1,8 +1,10 @@
 package com.abada.nstnote;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -14,33 +16,29 @@ public class OnFLyActivity extends AppCompatActivity {
     Button save,cancel;
     EditText note;
     String toastText = "";
-    NoteAdapter noteAdapter = MainActivity.noteAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(R.string.tile_label);
         setContentView(R.layout.activity_popup);
-
         setFinishOnTouchOutside(false);
-        save=findViewById(R.id.save);
-        cancel=findViewById(R.id.cancel);
-        note=findViewById(R.id.note);
+        save = findViewById(R.id.save);
+        cancel = findViewById(R.id.cancel);
+        note = findViewById(R.id.note);
+        note.requestFocus();
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.toggleSoftInputFromWindow(note.getWindowToken(), InputMethodManager.SHOW_FORCED, 0);
 
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "onClick: ");
                 toastText = "Saved";
-                IOManager iom = new IOManager(OnFLyActivity.this);
+                IOManager iom = IOManager.getInstance(getApplication());
                 Note newNote = new Note(note.getText().toString());
                 if (newNote.getBody().isEmpty()) {
                     toastText = "Canceled";
                 } else {
-                    iom.writeNote(newNote);
-                    try {
-                        noteAdapter.addItem(-1, newNote);
-                    } catch (Exception e) {
-                    }
+                    iom.insert(newNote);
                 }
                 OnFLyActivity.this.onBackPressed();
             }

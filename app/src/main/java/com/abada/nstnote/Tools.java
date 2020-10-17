@@ -20,8 +20,7 @@ public class Tools {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
                         Note note = arrayAdapter.getItem(position);
-                        arrayAdapter.removeItem(position);
-                        IOManager iom = new IOManager(context);
+                        IOManager iom = IOManager.getInstance(((MainActivity) context).getApplication());
                         iom.deleteNote(note);
                         dialog.dismiss();
                     }
@@ -38,7 +37,7 @@ public class Tools {
     public static void copy(final Context context,final Note note){
         ClipboardManager clipboard = (ClipboardManager)
                 context.getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText(""+note.getHeader(), ""+note.getBody());
+        ClipData clip = ClipData.newPlainText("" + note.getHeader(), "" + note.toString());
         clipboard.setPrimaryClip(clip);
     }
 }

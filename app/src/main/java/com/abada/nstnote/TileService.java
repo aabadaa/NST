@@ -8,8 +8,13 @@ public class TileService extends android.service.quicksettings.TileService {
     public static boolean clicked=false;
     @Override
     public void onClick() {
-        clicked=true;
-        startActivity(new Intent(this, OnFLyActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        clicked = true;
+        Class dist = null;
+        if (MainActivity.isOpend)
+            dist = NoteActivity.class;
+        else
+            dist = OnFLyActivity.class;
+        startActivity(new Intent(this, dist).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
 

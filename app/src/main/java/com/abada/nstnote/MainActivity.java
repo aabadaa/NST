@@ -7,8 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,34 +15,27 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-
 public class MainActivity extends AppCompatActivity {
     public final String TAG = this.getClass().getName();
-    public static NoteAdapter noteAdapter;
+    public static boolean isOpend = false;
+    NoteAdapter noteAdapter;
     RecyclerView recyclerView;
-    ArrayList<Note> noteList;
-    RecyclerView.LayoutManager layoutManager;
     IOManager iom;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        isOpend = true;
         Log.i(TAG, "onCreate: ");
         StoragePermissionGranted();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ((Button) findViewById(R.id.new_note_button)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, NoteActivity.class));
-            }
+        findViewById(R.id.new_note_button).setOnClickListener((v) -> {
+            startActivity(new Intent(MainActivity.this, NoteActivity.class));
         });
-        iom = new IOManager(this);
+        iom = IOManager.getInstance(getApplication());
         recyclerView = findViewById(R.id.rv);
-        layoutManager = new LinearLayoutManager(this);
-        noteList = iom.getNotes();
-        noteAdapter = new NoteAdapter(this, noteList);
-        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        noteAdapter = iom.getNoteAdapter(this);
         recyclerView.setAdapter(noteAdapter);
         registerForContextMenu(recyclerView);
     }
@@ -52,26 +43,24 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        noteAdapter.notifyDataSetChanged();
         Log.i(TAG, "onStart: ");
     }
 
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
-        //return super.onContextItemSelected(item);
+        Log.i(TAG, "onContextItemSelected: " + item.getGroupId());
         switch (item.getTitle().toString()) {
             case "delete":
                Tools.AskOption(this,noteAdapter,item.getGroupId()).show();
                 break;
             case "copy":
-                Tools.copy(this,noteList.get(item.getGroupId()));
+                Tools.copy(this, noteAdapter.getItem(item.getGroupId()));
                 break;
             case "select all":
                 Toast.makeText(this, "No select all haha", Toast.LENGTH_SHORT).show();
                 break;
         }
         return false;
-
     }
 
     @Override
@@ -86,6 +75,13 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onPause: ");
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
+        isOpend = false;
+    }
+
     public void StoragePermissionGranted() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -97,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else  //permission is automatically granted on sdk<23 upon installation
             Log.v(TAG, "Permission is granted");
-       // new IOManager(this).fix();
+        IOManager.getInstance(getApplication()).fix();
     }
 
 }

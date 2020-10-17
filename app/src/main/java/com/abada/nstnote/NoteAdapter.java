@@ -1,6 +1,7 @@
 package com.abada.nstnote;
 
 import android.content.Intent;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +16,7 @@ import java.util.List;
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     List<Note> notes;
     MainActivity context;
-
+    public final String TAG = getClass().getName();
     public NoteAdapter(MainActivity context, List<Note> notes) {
         this.context = context;
         this.notes = notes;
@@ -29,9 +30,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         v.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = context.recyclerView.getChildLayoutPosition(v);
+                int pos = context.recyclerView.getChildLayoutPosition(v);
+                long id = notes.get(pos).id;
                 Intent intent = new Intent(context, NoteActivity.class).
-                        putExtra(Note.POSITION, position);
+                        putExtra(Note.ID, id);
+                Log.i(TAG, "onClick: " + id);
                 context.startActivity(intent);
             }
         });
@@ -46,15 +49,18 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         TextView date = holder.date;
         header.setText(note.getHeader());
         date.setText(note.getDate());
+        holder.id = note.id;
     }
 
     @Override
     public int getItemCount() {
+
         return notes.size();
     }
 
-    public void removeItem(int position) {
+    public void removeItem(Note note) {
         try {
+            int position = notes.indexOf(note);
             notes.remove(position);
             notifyItemRemoved(position);
         } catch (Exception e) {
@@ -62,22 +68,29 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         }
     }
 
-    public void addItem(int notePosition, Note note) {
-        if (notePosition == -1) {
-            notes.add(note);
-            notifyDataSetChanged();
-        } else {
-            notes.add(notePosition, note);
-            notifyItemInserted(notePosition);
-        }
+    public void addItem(Note note) {
+        notes.add(note);
+        int position = notes.indexOf(note);
+        notifyItemInserted(position);
+
+    }
+
+    public void setItem(int index, Note note) {
+        notes.set(index, note);
+        notifyItemChanged(index);
     }
 
     public Note getItem(int position) {
         return notes.get(position);
     }
 
+    public int indexOf(Note note) {
+        return notes.indexOf(note);
+    }
+
     public static class NoteHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
         public TextView header, date;
+        long id;
 
         public NoteHolder(View v) {
             super(v);
@@ -88,9 +101,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
         @Override
         public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-            menu.add(getAdapterPosition(), v.getId(), 0, "delete");
-            menu.add(getAdapterPosition(), v.getId(), 0, "copy");
-            menu.add(getAdapterPosition(), v.getId(), 0, "select all");
+            menu.add(getAdapterPosition(), Math.toIntExact(id), 0, "delete");
+            menu.add(getAdapterPosition(), Math.toIntExact(id), 0, "copy");
+            menu.add(getAdapterPosition(), Math.toIntExact(id), 0, "select all");
         }
     }
 }

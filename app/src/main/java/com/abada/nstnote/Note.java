@@ -3,15 +3,28 @@ package com.abada.nstnote;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+@Entity(tableName = "notes")
 public class Note implements Parcelable {
-    public static final String DELETE = "delete", POSITION = "position", NEW = "new", HEADER = "header", DATE = "date";
-    private String header = "", body = "";
-    private String date;
-    boolean checked = false;
+    public static final String ID = "id";
+    @Ignore
+    public final String TAG = getClass().getName();
+    @PrimaryKey(autoGenerate = true)
+    public long id;
+    @ColumnInfo(name = "header")
+    private String header = "";
+    @ColumnInfo(name = "body")
+    private String body = "";
+    @ColumnInfo(name = "date")
+    private String date = "";
     public static final Creator<Note> CREATOR = new Creator<Note>() {
         @Override
         public Note createFromParcel(Parcel in) {
@@ -24,10 +37,8 @@ public class Note implements Parcelable {
         }
     };
 
-    {
-
-    }
     public Note() {}
+
     public Note(String body){
         this.body=body;
         setDate();
@@ -45,29 +56,40 @@ public class Note implements Parcelable {
         header = in.readString();
         body = in.readString();
         date = in.readString();
+        id = in.readLong();
     }
 
     public String getHeader() {
         return header;
     }
 
+    public void setHeader(String header) {
+        this.header = header;
+    }
+
     public String getBody() {
         return body;
     }
 
+    public void setBody(String body) {
+        this.body = body;
+    }
+
     public void setDate(String date) {
-        this.date=date;
+        this.date = date;
     }
-    public void setDate(){
+
+    public void setDate() {
         Date currentTime = Calendar.getInstance().getTime();
-        SimpleDateFormat sm=new SimpleDateFormat("yy-mm-dd hh:mm");
-        date= sm.format(currentTime);
+        SimpleDateFormat sm = new SimpleDateFormat("yyyy-mm-dd hh:mm");
+        date = sm.format(currentTime);
     }
-    public String getDate(){
+
+    public String getDate() {
         return date;
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return header.isEmpty() && body.isEmpty();
     }
     @Override
@@ -80,21 +102,26 @@ public class Note implements Parcelable {
         dest.writeString(header);
         dest.writeString(body);
         dest.writeString(date);
+        dest.writeLong(id);
     }
 
     @Override
     public String toString() {
-        return header + "\t\n" + body;
+        return "Note{" +
+                " \"header\":" + header +
+                ",\n\"body\":" + body + "\n" +
+                "}";
     }
 
     @Override
     public boolean equals(Object other) {
         Note o = (Note) other;
-        return header.equals(o.getHeader()) && body.equals(o.getBody()) && date.equals(o.getDate());
+        return id == o.id;
     }
 
-    public boolean equalsIgnoreDate(Object other) {
-        Note o = (Note) other;
-        return header.equals(o.getHeader()) && body.equals(o.getBody());
+    public boolean equalsIgnoreDate(Note other) {
+        if (other == null)
+            return false;
+        return header.equals(other.getHeader()) && body.equals(other.getBody());
     }
 }
