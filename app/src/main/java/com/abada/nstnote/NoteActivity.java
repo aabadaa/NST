@@ -7,7 +7,6 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 public class NoteActivity extends AppCompatActivity {
     final String TAG = this.getClass().getName();
@@ -22,18 +21,16 @@ public class NoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         Log.i(TAG, "onCreate: ");
+
         intent = getIntent();
         header = findViewById(R.id.note_header);
         body = findViewById(R.id.note_text);
         iom = IOManager.getInstance(getApplication());
-        note = iom.getNote();
-        note.observe(this, new Observer<Note>() {
-            @Override
-            public void onChanged(Note note) {
-                header.setText(note.getHeader());
-                body.setText(note.getBody());
-                curNote = note;
-            }
+        note = iom.note;
+        note.observe(this, note -> {
+            header.setText(note.getHeader());
+            body.setText(note.getBody());
+            curNote = note;
         });
         if (intent.hasExtra(Note.ID)) {
             long id = intent.getLongExtra(Note.ID, -1);
@@ -53,6 +50,7 @@ public class NoteActivity extends AppCompatActivity {
     protected void onStop() {
         Log.i(TAG, "onStop: ");
         super.onStop();
+        TileService.clicked = false;
     }
 
     void save() {
@@ -62,7 +60,7 @@ public class NoteActivity extends AppCompatActivity {
         if (curNote != null)
             note.id = curNote.id;
         if (intent.hasExtra(Note.ID)) {
-            if (!note.equalsIgnoreDate(curNote))
+            if (!note.equalsIgnoreDate(curNote) || curNote.isEmpty())
                 if (note.isEmpty())
                     iom.deleteNote(note);
                 else

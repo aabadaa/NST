@@ -9,7 +9,7 @@ public class TileService extends android.service.quicksettings.TileService {
     @Override
     public void onClick() {
         clicked = true;
-        Class dist = null;
+        Class dist;
         if (MainActivity.isOpend)
             dist = NoteActivity.class;
         else

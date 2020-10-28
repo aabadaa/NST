@@ -1,7 +1,6 @@
 package com.abada.nstnote;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.annotation.SuppressLint;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
@@ -13,10 +12,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 @Entity(tableName = "notes")
-public class Note implements Parcelable {
+public class Note {
     public static final String ID = "id";
-    @Ignore
-    public final String TAG = getClass().getName();
     @PrimaryKey(autoGenerate = true)
     public long id;
     @ColumnInfo(name = "header")
@@ -25,24 +22,17 @@ public class Note implements Parcelable {
     private String body = "";
     @ColumnInfo(name = "date")
     private String date = "";
-    public static final Creator<Note> CREATOR = new Creator<Note>() {
-        @Override
-        public Note createFromParcel(Parcel in) {
-            return new Note(in);
-        }
+    @Ignore
+    private boolean checked = false;
 
-        @Override
-        public Note[] newArray(int size) {
-            return new Note[size];
-        }
-    };
+    public Note() {
+    }
 
-    public Note() {}
-
-    public Note(String body){
-        this.body=body;
+    public Note(String body) {
+        this.body = body;
         setDate();
     }
+
     public Note(String header, String body) {
         this.header = header;
         this.body = body;
@@ -52,13 +42,6 @@ public class Note implements Parcelable {
         this(header,body);
         setDate(date);
     }
-    protected Note(Parcel in) {
-        header = in.readString();
-        body = in.readString();
-        date = in.readString();
-        id = in.readLong();
-    }
-
     public String getHeader() {
         return header;
     }
@@ -79,9 +62,17 @@ public class Note implements Parcelable {
         this.date = date;
     }
 
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void check() {
+        checked = !checked;
+    }
+
     public void setDate() {
         Date currentTime = Calendar.getInstance().getTime();
-        SimpleDateFormat sm = new SimpleDateFormat("yyyy-mm-dd hh:mm");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
         date = sm.format(currentTime);
     }
 
@@ -92,29 +83,21 @@ public class Note implements Parcelable {
     public boolean isEmpty() {
         return header.isEmpty() && body.isEmpty();
     }
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(header);
-        dest.writeString(body);
-        dest.writeString(date);
-        dest.writeLong(id);
-    }
 
     @Override
     public String toString() {
         return "Note{" +
-                " \"header\":" + header +
-                ",\n\"body\":" + body + "\n" +
-                "}";
+                "id=" + id +
+                ", header='" + header + '\'' +
+                ", body='" + body + '\'' +
+                ", date='" + date + '\'' +
+                '}';
     }
 
     @Override
     public boolean equals(Object other) {
+        if (!(other instanceof Note))
+            return false;
         Note o = (Note) other;
         return id == o.id;
     }

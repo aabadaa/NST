@@ -11,19 +11,21 @@ import java.util.List;
 @Dao
 public abstract class NoteDao {
     @Query("select id,header,date from notes")
-    abstract List<Note> getAll();
+    public abstract List<Note> getAll();
 
     @Insert
-    abstract Long insert(Note note);
+    public abstract Long insert(Note note);
 
     @Delete
-    abstract void delete(Note note);
+    public abstract void delete(Note note);
+
+    @Delete
+    public abstract void delete(List<Note> notes);
 
     @Update
-    abstract void update(Note note);
+    public abstract void update(Note note);
 
     @Query("select*from notes where id=:id")
-    abstract Note getNoteById(long id);
-
+    public abstract Note getNoteById(long id);
 
 }
