@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Entity(tableName = "notes")
 public class Note {
-    public static final String ID = "id";
+    public static final String NEW_NOTE = "new";
     @PrimaryKey(autoGenerate = true)
     public long id;
     @ColumnInfo(name = "header")
@@ -21,37 +21,52 @@ public class Note {
     @ColumnInfo(name = "body")
     private String body = "";
     @ColumnInfo(name = "date")
-    private String date = "";
+    private String date;
     @Ignore
     private boolean checked = false;
+    @Ignore
+    private OnCheckListener onCheckListener;
 
     public Note() {
+        setDate();
     }
 
+    @Ignore
     public Note(String body) {
         this.body = body;
         setDate();
     }
 
+    @Ignore
     public Note(String header, String body) {
         this.header = header;
         this.body = body;
         setDate();
     }
-    public Note(String header ,String body,String date){
-        this(header,body);
+
+    public Note(String header, String body, String date) {
+        this(header, body);
         setDate(date);
     }
+
     public String getHeader() {
         return header;
     }
 
-    public void setHeader(String header) {
-        this.header = header;
-    }
-
     public String getBody() {
         return body;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void setHeader(String header) {
+        this.header = header;
     }
 
     public void setBody(String body) {
@@ -62,22 +77,25 @@ public class Note {
         this.date = date;
     }
 
-    public boolean isChecked() {
-        return checked;
-    }
-
-    public void check() {
-        checked = !checked;
-    }
-
     public void setDate() {
         Date currentTime = Calendar.getInstance().getTime();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
         date = sm.format(currentTime);
     }
 
-    public String getDate() {
-        return date;
+    public void setOnCheckListener(OnCheckListener onCheckListener) {
+        this.onCheckListener = onCheckListener;
+    }
+
+    public void check() {
+        checked = !checked;
+        if (onCheckListener != null) {
+            onCheckListener.onCheck(checked);
+        }
+    }
+
+    public boolean contains(CharSequence in) {
+        return header.contains(in) || body.contains(in);
     }
 
     public boolean isEmpty() {
@@ -106,5 +124,9 @@ public class Note {
         if (other == null)
             return false;
         return header.equals(other.getHeader()) && body.equals(other.getBody());
+    }
+
+    interface OnCheckListener {
+        void onCheck(boolean isChecked);
     }
 }

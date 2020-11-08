@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 @Database(entities = Note.class, version = 1, exportSchema = false)
 public abstract class MyRoom extends RoomDatabase {
     private static MyRoom instance;
-    private final ExecutorService excutor = Executors.newFixedThreadPool(4);
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     public static MyRoom getInstance(Application application) {
         if (instance == null) {
@@ -27,7 +27,7 @@ public abstract class MyRoom extends RoomDatabase {
     public abstract NoteDao getDao();
 
     public void execute(Runnable runnable) {
-        excutor.execute(runnable);
+        executor.execute(runnable);
     }
 
 }

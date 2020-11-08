@@ -4,31 +4,37 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginLeft="4dp"
-    android:layout_marginTop="4.5dp"
-    android:layout_marginRight="4dp"
+    android:layout_marginLeft="3dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginRight="3dp"
+    android:padding="3dp"
     android:background="@drawable/item_background_checked">
 
     <TextView
         android:id="@+id/list_item_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/cocon"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        style="@style/item_style"
+        android:paddingBottom="4dp"
         android:clickable="false"
         android:focusable="false"
+        android:textColor="@color/fontColor"
+        android:textSize="24sp"
         android:focusableInTouchMode="false"
         android:maxLines="1"
         tools:text="header" />
 
     <TextView
         android:gravity="left"
+        android:fontFamily="@font/cocon"
+        android:textColor="@color/fontColor"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
         android:id="@+id/list_item_date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxLines="1"
-        android:paddingBottom="8dp"
         android:textSize="16sp"
         tools:text="5/10/2020" />
 

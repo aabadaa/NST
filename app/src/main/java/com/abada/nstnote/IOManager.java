@@ -5,29 +5,33 @@ import android.util.Log;
 
 import androidx.lifecycle.MutableLiveData;
 
-import java.util.ArrayList;
+import com.abada.nstnote.UI.MainActivity;
+
 import java.util.List;
 
 public class IOManager {
     public final String TAG = this.getClass().getName();
-    private static IOManager instance = null;
+    private static IOManager instance;
     private final MyRoom room;
     private final NoteDao dao;
-    public final MutableLiveData<Note> note = new MutableLiveData<>();
+    private final MutableLiveData<Note> note;
     private final MutableLiveData<List<Note>> notes;
+    private final MutableLiveData<Integer> selectedCount;
+    private final Note.OnCheckListener onCheckListener;
     private NoteAdapter noteAdapter;
     private List<Note> list;
 
-    private IOManager(Application application) {
-        room = MyRoom.getInstance(application);
-        dao = room.getDao();
-        getAll();
+    {
+        note = new MutableLiveData<>();
         notes = new MutableLiveData<>();
-        notes.observeForever(notes -> {
-            list = notes;
-            if (noteAdapter != null)
-                noteAdapter.setList(list);
-        });
+        selectedCount = new MutableLiveData<>();
+        onCheckListener = new Note.OnCheckListener() {
+            @Override
+            public void onCheck(boolean isChecked) {
+                int x = selectedCount.getValue() + (isChecked ? 1 : -1);
+                selectedCount.setValue(x);
+            }
+        };
     }
 
     public static IOManager getInstance(Application application) {
@@ -36,17 +40,39 @@ public class IOManager {
         return instance;
     }
 
-    public NoteAdapter getNoteAdapter(MainActivity mainActivity) {
-        if (list == null)
-            getAll();
-        return noteAdapter = new NoteAdapter(mainActivity, list);
+    private IOManager(Application application) {
+        room = MyRoom.getInstance(application);
+        dao = room.getDao();
+        room.execute(() -> notes.postValue(dao.getAll()));
+        selectedCount.setValue(0);
+        notes.observeForever(notes -> {
+            list = notes;
+            if (noteAdapter != null)
+                noteAdapter.setList(list);
+        });
     }
 
-    void insert(Note note) {
-        Log.i(TAG, "writeNote: ");
-        if (note.getDate().isEmpty())
-            note.setDate();
+    public NoteAdapter getNoteAdapter(MainActivity mainActivity) {
+        if (noteAdapter == null || list.size() == 0) {
+            room.execute(() -> notes.postValue(dao.getAll()));
+        }
+        if (noteAdapter == null) {
+            noteAdapter = new NoteAdapter(mainActivity, onCheckListener);
+        }
+        return noteAdapter;
+    }
 
+    public MutableLiveData<Note> getNote() {
+        return note;
+    }
+
+    public MutableLiveData<Integer> getSelectedCount() {
+        return selectedCount;
+    }
+
+    public void insert(Note note) {
+        Log.i(TAG, "writeNote: ");
+        note.setDate();
         room.execute(() -> {
             note.id = dao.insert(note);
             list.add(note);
@@ -56,29 +82,24 @@ public class IOManager {
 
     public void deleteNote(Note note) {
         room.execute(() -> dao.delete(note));
-        noteAdapter.removeItem(note);
+        noteAdapter.remove(note);
     }
 
     public void deleteSelected() {
-        room.execute(() -> {
-            List<Note> t = new ArrayList<>(noteAdapter.selected);
-            dao.delete(t);
-        });
-        noteAdapter.deleteSelected();
+        final List<Note> selectedNotes = noteAdapter.deleteSelected();
+        room.execute(() -> dao.delete(selectedNotes));
+        selectedCount.setValue(0);
     }
 
     public void update(Note note) {
         room.execute(() -> dao.update(note));
-        int index = noteAdapter.indexOf(note);
-        noteAdapter.setItem(index, note);
+        noteAdapter.updateItem(note);
     }
 
     public void getNoteById(long id) {
-        room.execute(() -> note.postValue(dao.getNoteById(id)));
+        if (id == -1)
+            note.setValue(new Note());
+        else
+            room.execute(() -> note.postValue(dao.getNoteById(id)));
     }
-
-    public void getAll() {
-        room.execute(() -> notes.postValue(dao.getAll()));
-    }
-
 }

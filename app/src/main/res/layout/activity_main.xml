@@ -2,13 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/item_style"
-    android:background="#0C0F53"
+    android:background="@color/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity"
-    tools:theme="@style/item_style">
+    tools:context=".UI.MainActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv"
@@ -28,11 +26,11 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@color/FABColor"
         android:clickable="true"
-        android:src="@drawable/iconadd"
+        android:src="@drawable/add_ic"
         android:tintMode="src_in"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-
         app:layout_constraintHorizontal_bias="0.954"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/rv"

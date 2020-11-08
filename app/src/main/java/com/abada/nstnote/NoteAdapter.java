@@ -1,27 +1,60 @@
 package com.abada.nstnote;
 
-import android.content.Intent;
-import android.util.Log;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.abada.nstnote.UI.MainActivity;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
-    List<Note> notes;
-    MainActivity mainActivity;
-    List<Note> selected = new ArrayList<>();
-    public final String TAG = getClass().getName();
+public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> implements Filterable {
+    private final MainActivity mainActivity;
+    private final Filter filter;
+    private final Note.OnCheckListener onCheckListener;
+    private List<Note> showedNotes = new LinkedList<>();
+    private List<Note> allNotes;
 
-    public NoteAdapter(MainActivity context, List<Note> notes) {
+    {
+        filter = new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                List<Note> notesFilter = new ArrayList<>();
+                if (constraint.toString().isEmpty())
+                    notesFilter.addAll(allNotes);
+                else
+                    for (Note note : allNotes)
+                        if (note.contains(constraint))
+                            notesFilter.add(note);
+
+                FilterResults filterResults = new FilterResults();
+                filterResults.values = notesFilter;
+                return filterResults;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                showedNotes.clear();
+                showedNotes.addAll((Collection<? extends Note>) results.values);
+                notifyDataSetChanged();
+            }
+        };
+    }
+
+    public NoteAdapter(MainActivity context, Note.OnCheckListener onCheckListener) {
         this.mainActivity = context;
-        this.notes = notes;
+        this.onCheckListener = onCheckListener;
     }
 
     @NonNull
@@ -29,88 +62,97 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     public NoteHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View v = layoutInflater.inflate(R.layout.list_item, parent, false);
-        v.setOnClickListener(v1 -> {
-            int pos = mainActivity.recyclerView.getChildLayoutPosition(v1);
-            long id = notes.get(pos).id;
-            Intent intent = new Intent(mainActivity, NoteActivity.class).
-                    putExtra(Note.ID, id);
-            Log.i(TAG, "onClick: " + id);
-            mainActivity.startActivity(intent);
-        });
+        v.setOnClickListener(mainActivity.getItemClickListener());
         return new NoteHolder(v);
-
     }
 
     @Override
     public void onBindViewHolder(@NonNull NoteHolder holder, int position) {
-        Note note = notes.get(position);
+        Note note = showedNotes.get(position);
+        note.setOnCheckListener(onCheckListener);
         TextView header = holder.header;
         TextView date = holder.date;
         header.setText(note.getHeader());
         date.setText(note.getDate());
         holder.id = note.id;
-        if (note.isChecked()) {
-            holder.itemView.setTag(true);
-            holder.itemView.setBackground(mainActivity.getDrawable(R.drawable.item_background_checked));
-        } else {
-            holder.itemView.setTag(false);
-            holder.itemView.setBackground(mainActivity.getDrawable(R.drawable.item_background_unchecked));
-        }
+        Drawable background;
+        if (note.isChecked())
+            background = mainActivity.getDrawable(R.drawable.item_background_checked);
+        else
+            background = mainActivity.getDrawable(R.drawable.item_background_unchecked);
+        holder.itemView.setTag(note.isChecked());
+        holder.itemView.setBackground(background);
     }
 
     @Override
     public int getItemCount() {
-        return notes.size();
+        return showedNotes.size();
     }
 
-    public void removeItem(Note note) {
-        try {
-            int position = notes.indexOf(note);
-            notes.remove(position);
+    @Override
+    public Filter getFilter() {
+        return filter;
+    }
 
-            notifyItemRemoved(position);
+    public void remove(Note... notes) {
+        try {
+            for (Note note : notes) {
+                int position = showedNotes.indexOf(note);
+                showedNotes.remove(position);
+                allNotes.remove(position);
+                notifyItemRemoved(position);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void setItem(int index, Note note) {
-        notes.set(index, note);
-        notifyItemChanged(index);
+    public void updateItem(Note note) {
+        int pos = showedNotes.indexOf(note);
+        allNotes.set(pos, note);
+        showedNotes.set(pos, note);
+        notifyItemChanged(pos);
     }
 
     public void setList(List<Note> notes) {
-        this.notes = notes;
+        this.allNotes = notes;
+        this.showedNotes = new ArrayList<>(notes);
         notifyDataSetChanged();
     }
 
     public Note getItem(int position) {
-        return notes.get(position);
+        return showedNotes.get(position);
     }
 
-    public int indexOf(Note note) {
-        return notes.indexOf(note);
-    }
-
-    public void checkAt(int pos) {
-        Note note = notes.get(pos);
+    public boolean checkAt(int pos) {
+        Note note = showedNotes.get(pos);
         notifyItemRemoved(pos);
         note.check();
-        if (note.isChecked())
-            selected.add(note);
-        else
-            selected.remove(note);
-        notes.set(pos, note);
         notifyItemInserted(pos);
-
-        mainActivity.enableSelect(selected.size() > 0);
+        return note.isChecked();
     }
 
-    public void deleteSelected() {
-        for (Note note : selected) removeItem(note);
+    public void checkALL() {
+        int x = IOManager.getInstance(mainActivity.getApplication()).getSelectedCount().getValue();
+        boolean allIsChecked = x == showedNotes.size();
+        for (int i = 0; i < showedNotes.size(); i++)
+            if (!showedNotes.get(i).isChecked() ^ allIsChecked)
+                checkAt(i);
+    }
 
-        selected = new ArrayList<>();
-        mainActivity.enableSelect(false);
+    public List<Note> deleteSelected() {
+        List<Note> selected = new LinkedList<>();
+        Iterator<Note> it = showedNotes.iterator();
+        while (it.hasNext()) {
+            Note note = it.next();
+            if (note.isChecked()) {
+                selected.add(note);
+            }
+        }
+        Note[] notes = new Note[selected.size()];
+        selected.toArray(notes);
+        remove(notes);
+        return selected;
     }
 
     public static class NoteHolder extends RecyclerView.ViewHolder {
@@ -122,6 +164,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             header = v.findViewById(R.id.list_item_header);
             date = v.findViewById(R.id.list_item_date);
         }
-
     }
+
 }

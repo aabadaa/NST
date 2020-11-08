@@ -4,13 +4,18 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.service.quicksettings.Tile;
 
+import com.abada.nstnote.UI.MainActivity;
+import com.abada.nstnote.UI.NoteActivity;
+import com.abada.nstnote.UI.OnFLyActivity;
+
 public class TileService extends android.service.quicksettings.TileService {
-    public static boolean clicked=false;
+    public static boolean clicked = false;
+
     @Override
     public void onClick() {
         clicked = true;
         Class dist;
-        if (MainActivity.isOpend)
+        if (MainActivity.isOpened)
             dist = NoteActivity.class;
         else
             dist = OnFLyActivity.class;
@@ -22,7 +27,7 @@ public class TileService extends android.service.quicksettings.TileService {
     public void onStartListening() {
         Tile tile = getQsTile();
         tile.setIcon(Icon.createWithResource(this,
-                R.drawable.ic_tile));
+                R.drawable.tile_ic));
         tile.setLabel(getString(R.string.tile_label));
 
         tile.setState(clicked?Tile.STATE_ACTIVE:Tile.STATE_INACTIVE);

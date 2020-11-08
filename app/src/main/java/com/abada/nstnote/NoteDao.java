@@ -10,7 +10,7 @@ import java.util.List;
 
 @Dao
 public abstract class NoteDao {
-    @Query("select id,header,date from notes")
+    @Query("select * from notes")
     public abstract List<Note> getAll();
 
     @Insert

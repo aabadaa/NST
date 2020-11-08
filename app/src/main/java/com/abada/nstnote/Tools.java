@@ -7,12 +7,14 @@ import android.content.Context;
 import android.view.ContextThemeWrapper;
 import android.widget.Toast;
 
+import com.abada.nstnote.UI.MainActivity;
+
 public class Tools {
     public static AlertDialog AskOption(final Context context) {
         return new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.Dialog))
                 .setTitle("Delete")
                 .setMessage("Are you sure?")
-                .setIcon(R.drawable.icondelete)
+                .setIcon(R.drawable.delete_ic)
                 .setPositiveButton("Yes", (dialog, whichButton) -> {
                     IOManager iom = IOManager.getInstance(((MainActivity) context).getApplication());
                     iom.deleteSelected();

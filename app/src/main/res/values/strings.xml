@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">NST Notes</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="tile_label">On fly note</string>
+    <string name="tile_label">On fly</string>
     <string name="cancel">cancel</string>
 
 </resources>

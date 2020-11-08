@@ -1,20 +1,21 @@
-package com.abada.nstnote;
+package com.abada.nstnote.UI;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.MutableLiveData;
+
+import com.abada.nstnote.IOManager;
+import com.abada.nstnote.Note;
+import com.abada.nstnote.R;
+import com.abada.nstnote.TileService;
 
 public class NoteActivity extends AppCompatActivity {
     final String TAG = this.getClass().getName();
     EditText header, body;
-    MutableLiveData<Note> note;
     Note curNote;
     IOManager iom;
-    Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,22 +23,19 @@ public class NoteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_note);
         Log.i(TAG, "onCreate: ");
 
-        intent = getIntent();
         header = findViewById(R.id.note_header);
         body = findViewById(R.id.note_text);
         iom = IOManager.getInstance(getApplication());
-        note = iom.note;
-        note.observe(this, note -> {
+        iom.getNote().observe(this, note -> {
+            if (note == null) {
+                note = new Note();
+                Log.i(TAG, "onCreate: null note reference observed");
+            }
             header.setText(note.getHeader());
             body.setText(note.getBody());
             curNote = note;
         });
-        if (intent.hasExtra(Note.ID)) {
-            long id = intent.getLongExtra(Note.ID, -1);
-            Log.i(TAG, "onCreate: " + id);
-            iom.getNoteById(id);
-        } else
-            note.setValue(new Note());
+
     }
 
     @Override
@@ -53,13 +51,18 @@ public class NoteActivity extends AppCompatActivity {
         TileService.clicked = false;
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
     void save() {
         String header = this.header.getText().toString();
         String body = this.body.getText().toString();
         Note note = new Note(header, body);
         if (curNote != null)
             note.id = curNote.id;
-        if (intent.hasExtra(Note.ID)) {
+        if (getIntent().getBooleanExtra(Note.NEW_NOTE, false)) {
             if (!note.equalsIgnoreDate(curNote) || curNote.isEmpty())
                 if (note.isEmpty())
                     iom.deleteNote(note);
@@ -67,5 +70,6 @@ public class NoteActivity extends AppCompatActivity {
                     iom.update(note);
         } else if (!note.isEmpty())
             iom.insert(note);
+        iom.getNote().setValue(new Note());
     }
 }

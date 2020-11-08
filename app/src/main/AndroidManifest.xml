@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.abada.nstnote">
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/app_icon"
@@ -8,9 +12,9 @@
         android:roundIcon="@mipmap/app_icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".NoteActivity" />
+        <activity android:name=".UI.NoteActivity" />
         <activity
-            android:name=".OnFLyActivity"
+            android:name=".UI.OnFLyActivity"
             android:excludeFromRecents="true"
             android:finishOnCloseSystemDialogs="false"
             android:showWhenLocked="true"
@@ -19,7 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity">
+        <activity android:name=".UI.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,7 +33,7 @@
 
         <service
             android:name=".TileService"
-            android:icon="@drawable/ic_tile"
+            android:icon="@drawable/tile_ic"
             android:label="@string/tile_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
