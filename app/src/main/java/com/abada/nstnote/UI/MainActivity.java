@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, NoteActivity.class).putExtra(Note.NEW_NOTE, false));
             iom.getNoteById(-1);
         };
-        delete = v -> Tools.AskOption(MainActivity.this).show();
+        delete = v -> startActivity(new Intent(this, AskDeleteActivity.class));// Tools.AskOption(MainActivity.this).show();
         selectAll = v -> noteAdapter.checkALL();
         itemClickListener = v -> {
             int pos = recyclerView.getChildLayoutPosition(v);

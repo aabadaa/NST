@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.service.quicksettings.Tile;
 
-import com.abada.nstnote.UI.MainActivity;
-import com.abada.nstnote.UI.NoteActivity;
 import com.abada.nstnote.UI.OnFLyActivity;
 
 public class TileService extends android.service.quicksettings.TileService {
@@ -14,12 +12,7 @@ public class TileService extends android.service.quicksettings.TileService {
     @Override
     public void onClick() {
         clicked = true;
-        Class dist;
-        if (MainActivity.isOpened)
-            dist = NoteActivity.class;
-        else
-            dist = OnFLyActivity.class;
-        startActivity(new Intent(this, dist).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        startActivity(new Intent(getApplicationContext(), OnFLyActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
 

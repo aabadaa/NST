@@ -67,7 +67,6 @@ public class OnFLyActivity extends AppCompatActivity {
         } else {
             iom.insert(newNote);
         }
-        Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
         iom.getNote().setValue(new Note());
     }
 
@@ -80,5 +79,7 @@ public class OnFLyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
+
     }
 }
