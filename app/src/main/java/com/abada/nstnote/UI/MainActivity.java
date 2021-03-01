@@ -33,7 +33,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class MainActivity extends AppCompatActivity {
-    public static boolean isOpened = false;
+    public static MainActivity This;
     public final String TAG = this.getClass().getName();
     NoteAdapter noteAdapter;
     FloatingActionButton button;
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        isOpened = true;
+        This = this;
         Log.i(TAG, "onCreate: ");
         StoragePermissionGranted();
         super.onCreate(savedInstanceState);
@@ -184,10 +184,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(TAG, "onStop: ");
+        //finishAndRemoveTask();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy: ");
-        isOpened = false;
+        This = null;
     }
 
     public void enableSelect(boolean enable) {
