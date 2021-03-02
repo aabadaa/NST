@@ -1,9 +1,11 @@
 package com.abada.nstnote.UI;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,48 +15,36 @@ import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
 
 public class OnFLy {
+    //Views
     Button save, cancel;
     EditText body;
+    //data
     Note newNote;
     String toastText = "saved";
     IOManager iom;
+    //events
     Closer closer;
+    InputMethodManager inputMethodManager;
+    View.OnKeyListener backButton;
+    //others
     Application application;
 
-    public OnFLy(View v, Application application, Closer closer) {
-        this.application = application;
-        this.closer = closer;
-        iom = IOManager.getInstance(application);
-        save = v.findViewById(R.id.save);
-        body = v.findViewById(R.id.note);
-        cancel = v.findViewById(R.id.cancel);
-        iom.getNote().observeForever(note -> body.setText(note.getBody()));
-        save.setOnClickListener(v1 -> {
-            save();
-            close();
-        });
-        cancel.setOnClickListener(v1 -> {
-            toastText = "canceled";
-            iom.getNote().setValue(new Note());
-            close();
-        });
-        v.setFocusableInTouchMode(true);
-        v.requestFocus();
-        v.setOnKeyListener((v12, keyCode, event) -> {
-            Log.i("TAG", "OnFLy: " + keyCode + " " + event);
-            if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK) {
+    {
+        backButton = new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                Log.i("TAG", "onKey: " + keyCode + " " + event);
                 if (body.getText().toString().isEmpty())
                     toastText = "Canceled";
                 else {
                     iom.getNote().setValue(new Note(body.getText().toString()));
                     toastText = "kept";
-
                 }
                 close();
                 return true;
             }
-            return false;
-        });
+
+        };
     }
 
     private void save() {
@@ -74,12 +64,43 @@ public class OnFLy {
         iom.getNote().setValue(new Note());
     }
 
-    void close() {
-        Toast.makeText(application, toastText, Toast.LENGTH_SHORT).show();
-        closer.close();
+    public OnFLy(View v, Application application, Closer closer) {
+        this.application = application;
+        inputMethodManager = (InputMethodManager) application.getSystemService(Context.INPUT_METHOD_SERVICE);
+        this.closer = closer;
+        iom = IOManager.getInstance(application);
+        save = v.findViewById(R.id.save);
+        body = v.findViewById(R.id.note);
+        cancel = v.findViewById(R.id.cancel);
+        iom.getNote().observeForever(note -> body.setText(note.getBody()));
+        save.setOnClickListener(v1 -> {
+            save();
+            close();
+        });
+        cancel.setOnClickListener(v1 -> {
+            toastText = "Canceled";
+            iom.getNote().setValue(new Note());
+            close();
+        });
+        v.setFocusableInTouchMode(true);
+        v.requestFocus();
+        v.setOnKeyListener(backButton);
+        showKeyboard();
     }
 
     public interface Closer {
         void close();
     }
+
+    void close() {
+        Toast.makeText(application, toastText, Toast.LENGTH_SHORT).show();
+        closer.close();
+        inputMethodManager.hideSoftInputFromWindow(body.getWindowToken(), 0);
+    }
+
+    private void showKeyboard() {
+        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        body.requestFocus();
+    }
+
 }

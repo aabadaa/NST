@@ -29,6 +29,8 @@
         android:layout_height="wrap_content"
         android:ems="40"
         android:hint="On fly note"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:textColor="@color/fontColor"
         android:textColorHint="@color/hintColor"
         android:padding="16dp"
