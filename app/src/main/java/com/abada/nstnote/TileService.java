@@ -6,8 +6,7 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.Icon;
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -19,6 +18,7 @@ public class TileService extends android.service.quicksettings.TileService {
 
     @Override
     public void onClick() {
+        Log.i("TAG", "onClick: " + clicked);
         if (clicked)
             return;
         if (!Settings.canDrawOverlays(this)) {
@@ -45,19 +45,20 @@ public class TileService extends android.service.quicksettings.TileService {
 
     private void showOnFLyNote() {
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        LayoutInflater li = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0 |
                 WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.RGBA_8888);
-        View v = li.inflate(R.layout.activity_popup, null);
-        new OnFLy(v, getApplication(), () -> {
-            clicked = false;
-            wm.removeView(v);
-        });
-        wm.addView(v, params);
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                0, PixelFormat.RGBA_8888);
+        OnFLy o = new OnFLy(getApplication()) {
+            @Override
+            public void close() {
+                clicked = false;
+                wm.removeView(this);
+            }
+        };
+        wm.addView(o, params);
     }
 }
