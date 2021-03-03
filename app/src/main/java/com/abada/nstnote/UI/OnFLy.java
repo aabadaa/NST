@@ -86,6 +86,7 @@ public class OnFLy {
         v.requestFocus();
         v.setOnKeyListener(backButton);
         showKeyboard();
+        body.setOnClickListener(v1 -> showKeyboard());
     }
 
     public interface Closer {

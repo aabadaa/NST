@@ -1,18 +1,6 @@
 package com.abada.nstnote.UI;
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.abada.nstnote.IOManager;
-import com.abada.nstnote.Note;
-import com.abada.nstnote.R;
-import com.abada.nstnote.TileService;
-
+/*
 public class OnFLyActivity extends AppCompatActivity {
     Button save, cancel;
     EditText body;
@@ -24,7 +12,7 @@ public class OnFLyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_popup);
+        setContentView(R.layout.activity_popup);
         v = getLayoutInflater().inflate(R.layout.activity_popup, null);
         setFinishOnTouchOutside(false);
         save = v.findViewById(R.id.save);
@@ -103,5 +91,31 @@ public class OnFLyActivity extends AppCompatActivity {
             iom.getNote().setValue(new Note());
 
         });
-    }*/
+    }
+}*/
+
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
+import com.abada.nstnote.R;
+import com.abada.nstnote.TileService;
+
+public class OnFLyActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        View v = LayoutInflater.from(this).inflate(R.layout.activity_popup, null);
+        new OnFLy(v, getApplication(), () -> {
+            TileService.clicked = false;
+            finish();
+        });
+        addContentView(v, new ConstraintLayout.LayoutParams(-2, -2));
+    }
+
+
 }
