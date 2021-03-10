@@ -48,10 +48,9 @@ public class TileService extends android.service.quicksettings.TileService {
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, 0 |
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
-                0, PixelFormat.RGBA_8888);
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.RGBA_8888);
         OnFLy o = new OnFLy(getApplication()) {
             @Override
             public void close() {

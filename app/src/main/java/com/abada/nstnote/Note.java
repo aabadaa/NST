@@ -7,13 +7,15 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.abada.nstnote.Events.OnCheckListener;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 @Entity(tableName = "notes")
 public class Note {
-    public static final String NEW_NOTE = "new";
+    public static final String ID = "ID";
     @PrimaryKey(autoGenerate = true)
     public long id;
     @ColumnInfo(name = "header")
@@ -124,9 +126,5 @@ public class Note {
         if (other == null)
             return false;
         return header.equals(other.getHeader()) && body.equals(other.getBody());
-    }
-
-    interface OnCheckListener {
-        void onCheck(boolean isChecked);
     }
 }

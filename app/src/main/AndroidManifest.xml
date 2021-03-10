@@ -19,12 +19,6 @@
         android:theme="@style/AppTheme">
         <activity android:name=".UI.NoteActivity" />
         <activity
-            android:name=".UI.AskDeleteActivity"
-            android:finishOnCloseSystemDialogs="false"
-            android:theme="@style/Dialog">
-
-        </activity>
-        <activity
             android:name=".UI.OnFLyActivity"
             android:excludeFromRecents="true"
             android:finishOnCloseSystemDialogs="false"

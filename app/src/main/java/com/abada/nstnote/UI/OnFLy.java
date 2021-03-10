@@ -12,9 +12,12 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.abada.nstnote.IOManager;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
+import com.abada.nstnote.Repositories.IOManager;
+import com.abada.nstnote.ViewModels.SingleNoteModel;
 
 public abstract class OnFLy extends FrameLayout {
     //Views
@@ -23,10 +26,10 @@ public abstract class OnFLy extends FrameLayout {
     private final Button cancel;
     private final EditText body;
     private final IOManager iom;
-    //events
-    private final InputMethodManager inputMethodManager;
     //others
     private final Application application;
+    //Models
+    SingleNoteModel viewModel;
     //data
     private Note newNote;
     private String toastText = "Saved";
@@ -35,19 +38,19 @@ public abstract class OnFLy extends FrameLayout {
         super(application);
         this.application = application;
         this.v = LayoutInflater.from(application).inflate(R.layout.activity_popup, this);
-        inputMethodManager = (InputMethodManager) application.getSystemService(Context.INPUT_METHOD_SERVICE);
         iom = IOManager.getInstance(application);
         save = v.findViewById(R.id.save);
         body = v.findViewById(R.id.note);
         cancel = v.findViewById(R.id.cancel);
-        iom.getNote().observeForever(note -> body.setText(note.getBody()));
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(application).create(SingleNoteModel.class);
+        viewModel.getNote().observeForever(note -> body.setText(note.getBody()));
         save.setOnClickListener(v1 -> {
             save();
             doClose();
         });
         cancel.setOnClickListener(v1 -> {
             toastText = "Canceled";
-            iom.getNote().setValue(new Note());
+            viewModel.getNote().setValue(new Note());
             doClose();
         });
         showHideKeyboard();
@@ -60,7 +63,7 @@ public abstract class OnFLy extends FrameLayout {
             if (body.getText().toString().isEmpty())
                 toastText = "Canceled";
             else {
-                iom.getNote().setValue(new Note(body.getText().toString()));
+                viewModel.getNote().setValue(new Note(body.getText().toString()));
                 toastText = "Kept";
             }
             doClose();
@@ -85,15 +88,16 @@ public abstract class OnFLy extends FrameLayout {
         if (header.length() > 30)
             header = header.substring(30);
         newNote = new Note(header, body);
+        viewModel.getNote().setValue(newNote);
         if (newNote.getBody().isEmpty()) {
-            toastText = "canceled";
+            toastText = "Canceled";
         } else {
-            iom.insert(newNote);
+            viewModel.edit(SingleNoteModel.INSERT);
         }
-        iom.getNote().setValue(new Note());
     }
 
     private void showHideKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) application.getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         body.requestFocus();
     }

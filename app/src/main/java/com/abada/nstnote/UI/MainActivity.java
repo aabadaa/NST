@@ -1,151 +1,79 @@
 package com.abada.nstnote.UI;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Canvas;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
-import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.abada.nstnote.IOManager;
+import com.abada.nstnote.Events.FABOnLongClickListener;
+import com.abada.nstnote.Events.NoteSimpleCallback;
+import com.abada.nstnote.Events.OnCheckListener;
 import com.abada.nstnote.Note;
 import com.abada.nstnote.NoteAdapter;
 import com.abada.nstnote.R;
 import com.abada.nstnote.Tools;
+import com.abada.nstnote.ViewModels.NotesViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
-
 public class MainActivity extends AppCompatActivity {
-    public static MainActivity This;
     public final String TAG = this.getClass().getName();
+    //Views
+    RecyclerView recyclerView;
     NoteAdapter noteAdapter;
     FloatingActionButton button;
-    RecyclerView recyclerView;
-    IOManager iom;
+    //Listeners
     View.OnClickListener addListener;
     View.OnClickListener delete;
     View.OnClickListener selectAll;
     View.OnClickListener itemClickListener;
-    View.OnLongClickListener longClickListener;
-    ItemTouchHelper itemTouchHelper;
+    //Others
+    NotesViewModel viewModel;
 
     {
-        addListener = v -> {
-            startActivity(new Intent(MainActivity.this, NoteActivity.class).putExtra(Note.NEW_NOTE, false));
-            iom.getNoteById(-1);
-        };
-        delete = v -> startActivity(new Intent(this, AskDeleteActivity.class));// Tools.AskOption(MainActivity.this).show();
-        selectAll = v -> noteAdapter.checkALL();
         itemClickListener = v -> {
             int pos = recyclerView.getChildLayoutPosition(v);
             long id = noteAdapter.getItem(pos).id;
-            Intent intent = new Intent(MainActivity.this, NoteActivity.class).putExtra(Note.NEW_NOTE, true);
-            iom.getNoteById(id);
+            Intent intent = new Intent(MainActivity.this, NoteActivity.class).putExtra(Note.ID, id);
             startActivity(intent);
         };
-
-        longClickListener = new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if ((boolean) button.getTag()) {
-                    button.setOnClickListener(selectAll);
-                    button.setImageResource(R.drawable.select_all_ic);
-                    Toast.makeText(MainActivity.this, "Select all", Toast.LENGTH_SHORT).show();
-                    button.setTag(false);
-                } else {
-                    button.setOnClickListener(delete);
-                    button.setImageResource(R.drawable.delete_ic);
-                    Toast.makeText(MainActivity.this, "Delete", Toast.LENGTH_SHORT).show();
-                    button.setTag(true);
-                }
-                Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
-                return true;
-            }
-        };
-        itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int pos = viewHolder.getAdapterPosition();
-                switch (direction) {
-                    case ItemTouchHelper.LEFT:
-                        noteAdapter.checkAt(pos);
-                        break;
-                    case ItemTouchHelper.RIGHT:
-                        Note note = noteAdapter.getItem(pos);
-                        Tools.copy(MainActivity.this, note);
-                        noteAdapter.notifyItemChanged(pos);
-                        break;
-                }
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-
-
-                boolean checked = (Boolean) viewHolder.itemView.getTag();
-                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                        .addSwipeLeftLabel(checked ? "Un check" : "Check")
-                        .addSwipeRightLabel("Copy")
-                        .create()
-                        .decorate();
-
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-            }
-        });
+        addListener = v -> startActivity(new Intent(MainActivity.this, NoteActivity.class));
+        delete = v -> Tools.askDialog(this, v1 -> viewModel.deleteSelected(noteAdapter), null);
+        selectAll = v -> noteAdapter.checkALL();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        This = this;
         Log.i(TAG, "onCreate: ");
         StoragePermissionGranted();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        iom = IOManager.getInstance(getApplication());
-
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(NotesViewModel.class);
         button = findViewById(R.id.new_note_button);
         recyclerView = findViewById(R.id.rv);
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        noteAdapter = iom.getNoteAdapter(this);
-        recyclerView.setAdapter(noteAdapter);
-        registerForContextMenu(recyclerView);
+        recyclerView.setAdapter(noteAdapter = new NoteAdapter(this, itemClickListener, new OnCheckListener(viewModel.getSelectedCount())));
+        viewModel.getNotes().observe(this, notes -> noteAdapter.setList(notes));
+        viewModel.getSelectedCount().observe(this, integer -> enableSelect(integer > 0));
+        new ItemTouchHelper(new NoteSimpleCallback(noteAdapter, 0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT)).attachToRecyclerView(recyclerView);
+    }
 
-        itemTouchHelper.attachToRecyclerView(recyclerView);
-
-        iom.getSelectedCount().observe(this, new Observer<Integer>() {
-            @Override
-            public void onChanged(Integer integer) {
-                enableSelect(integer > 0);
-            }
-        });
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume: ");
     }
 
     @Override
@@ -168,43 +96,11 @@ public class MainActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.i(TAG, "onStart: ");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.i(TAG, "onResume: ");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(TAG, "onPause: ");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i(TAG, "onStop: ");
-        //finishAndRemoveTask();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.i(TAG, "onDestroy: ");
-        This = null;
-    }
-
     public void enableSelect(boolean enable) {
         if (enable) {
             button.setOnClickListener(delete);
             button.setImageResource(R.drawable.delete_ic);
-            button.setOnLongClickListener(longClickListener);
+            button.setOnLongClickListener(new FABOnLongClickListener(this, selectAll, delete));
             button.setTag(true);
         } else {
             button.setOnClickListener(addListener);
@@ -212,10 +108,6 @@ public class MainActivity extends AppCompatActivity {
             button.setOnLongClickListener(null);
             button.setTag(null);
         }
-    }
-
-    public View.OnClickListener getItemClickListener() {
-        return itemClickListener;
     }
 
     public void StoragePermissionGranted() {
@@ -226,12 +118,10 @@ public class MainActivity extends AppCompatActivity {
             Log.v(TAG, "Permission is revoked");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (!Settings.canDrawOverlays(this)) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, 1234);
-            }
+        if (!Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, 1234);
         }
     }
 }

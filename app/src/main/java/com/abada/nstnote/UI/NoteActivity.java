@@ -5,18 +5,18 @@ import android.util.Log;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
-import com.abada.nstnote.IOManager;
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
-import com.abada.nstnote.TileService;
+import com.abada.nstnote.ViewModels.SingleNoteModel;
 
 public class NoteActivity extends AppCompatActivity {
     final String TAG = this.getClass().getName();
+    long id = -2;
     EditText header, body;
     Note curNote;
-    IOManager iom;
-
+    SingleNoteModel viewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,51 +25,46 @@ public class NoteActivity extends AppCompatActivity {
 
         header = findViewById(R.id.note_header);
         body = findViewById(R.id.note_text);
-        iom = IOManager.getInstance(getApplication());
-        iom.getNote().observe(this, note -> {
-            if (note == null) {
-                note = new Note();
-                Log.i(TAG, "onCreate: null note reference observed");
-            }
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(SingleNoteModel.class);
+        viewModel.getNote().observe(this, note -> {
             header.setText(note.getHeader());
             body.setText(note.getBody());
-            curNote = note;
         });
+
+        if (getIntent().hasExtra(Note.ID)) {
+            viewModel.getNote(id = getIntent().getLongExtra(Note.ID, -2));
+            curNote = viewModel.getNote().getValue();
+        }
 
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        save();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.i(TAG, "onStop: ");
-        super.onStop();
-        TileService.clicked = false;
+        viewModel.getNote().setValue(new Note(header.getText().toString(), body.getText().toString()));
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        save();
     }
 
     void save() {
         String header = this.header.getText().toString();
         String body = this.body.getText().toString();
         Note note = new Note(header, body);
-        if (curNote != null)
-            note.id = curNote.id;
-        if (getIntent().getBooleanExtra(Note.NEW_NOTE, false)) {
-            if (!note.equalsIgnoreDate(curNote) || curNote.isEmpty())
+        if (id != -2)
+            note.id = id;
+        viewModel.getNote().setValue(note);
+        if (id != -2) {
+            if (!note.equalsIgnoreDate(curNote))
                 if (note.isEmpty())
-                    iom.deleteNote(note);
+                    viewModel.edit(SingleNoteModel.DELETE);
                 else
-                    iom.update(note);
+                    viewModel.edit(SingleNoteModel.UPDATE);
+
         } else if (!note.isEmpty())
-            iom.insert(note);
-        iom.getNote().setValue(new Note());
+            viewModel.edit(SingleNoteModel.INSERT);
     }
 }

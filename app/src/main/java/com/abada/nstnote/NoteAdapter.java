@@ -1,5 +1,6 @@
 package com.abada.nstnote;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.abada.nstnote.UI.MainActivity;
+import com.abada.nstnote.Events.OnCheckListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,9 +21,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> implements Filterable {
-    private final MainActivity mainActivity;
     private final Filter filter;
-    private final Note.OnCheckListener onCheckListener;
+    private final OnCheckListener onCheckListener;
+    private final View.OnClickListener itemClickListener;
+    private final Context context;
     private List<Note> showedNotes = new LinkedList<>();
     private List<Note> allNotes;
 
@@ -52,8 +54,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
         };
     }
 
-    public NoteAdapter(MainActivity context, Note.OnCheckListener onCheckListener) {
-        this.mainActivity = context;
+    public NoteAdapter(Context context, View.OnClickListener itemClickListener, OnCheckListener onCheckListener) {
+        this.context = context;
+        this.itemClickListener = itemClickListener;
         this.onCheckListener = onCheckListener;
     }
 
@@ -62,7 +65,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
     public NoteHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View v = layoutInflater.inflate(R.layout.list_item, parent, false);
-        v.setOnClickListener(mainActivity.getItemClickListener());
+        v.setOnClickListener(itemClickListener);
         return new NoteHolder(v);
     }
 
@@ -77,9 +80,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
         holder.id = note.id;
         Drawable background;
         if (note.isChecked())
-            background = mainActivity.getDrawable(R.drawable.item_background_checked);
+            background = context.getDrawable(R.drawable.item_background_checked);
         else
-            background = mainActivity.getDrawable(R.drawable.item_background_unchecked);
+            background = context.getDrawable(R.drawable.item_background_unchecked);
         holder.itemView.setTag(note.isChecked());
         holder.itemView.setBackground(background);
     }
@@ -92,6 +95,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
     @Override
     public Filter getFilter() {
         return filter;
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     public void remove(Note... notes) {
@@ -108,6 +115,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
     }
 
     public void updateItem(Note note) {
+        //todo: try to declare a sender intent to use this method
+
         int pos = showedNotes.indexOf(note);
         allNotes.set(pos, note);
         showedNotes.set(pos, note);
@@ -133,7 +142,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
     }
 
     public void checkALL() {
-        int x = IOManager.getInstance(mainActivity.getApplication()).getSelectedCount().getValue();
+        int x = onCheckListener.getSelectedCount();
         boolean allIsChecked = x == showedNotes.size();
         for (int i = 0; i < showedNotes.size(); i++)
             if (!showedNotes.get(i).isChecked() ^ allIsChecked)
