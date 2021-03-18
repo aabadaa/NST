@@ -5,8 +5,6 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Filter;
-import android.widget.Filterable;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,48 +12,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.abada.nstnote.Events.OnCheckListener;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> implements Filterable {
-    private final Filter filter;
+public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     private final OnCheckListener onCheckListener;
     private final View.OnClickListener itemClickListener;
     private final Context context;
-    private List<Note> showedNotes = new LinkedList<>();
-    private List<Note> allNotes;
+    private List<Note> showedNotes;
 
-    {
-        filter = new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                List<Note> notesFilter = new ArrayList<>();
-                if (constraint.toString().isEmpty())
-                    notesFilter.addAll(allNotes);
-                else
-                    for (Note note : allNotes)
-                        if (note.contains(constraint))
-                            notesFilter.add(note);
 
-                FilterResults filterResults = new FilterResults();
-                filterResults.values = notesFilter;
-                return filterResults;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                showedNotes.clear();
-                showedNotes.addAll((Collection<? extends Note>) results.values);
-                notifyDataSetChanged();
-            }
-        };
-    }
-
-    public NoteAdapter(Context context, View.OnClickListener itemClickListener, OnCheckListener onCheckListener) {
+    public NoteAdapter(Context context, List<Note> notes, View.OnClickListener itemClickListener, OnCheckListener onCheckListener) {
         this.context = context;
+        this.showedNotes = notes;
         this.itemClickListener = itemClickListener;
         this.onCheckListener = onCheckListener;
     }
@@ -92,10 +62,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
         return showedNotes.size();
     }
 
-    @Override
-    public Filter getFilter() {
-        return filter;
-    }
+
 
     public Context getContext() {
         return context;
@@ -106,7 +73,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
             for (Note note : notes) {
                 int position = showedNotes.indexOf(note);
                 showedNotes.remove(position);
-                allNotes.remove(position);
                 notifyItemRemoved(position);
             }
         } catch (Exception e) {
@@ -114,18 +80,17 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> im
         }
     }
 
-    public void updateItem(Note note) {
-        //todo: try to declare a sender intent to use this method
+    public void insertItem(Note note) {
+        showedNotes.add(note);
+    }
 
+    public void updateItem(Note note) {
         int pos = showedNotes.indexOf(note);
-        allNotes.set(pos, note);
         showedNotes.set(pos, note);
-        notifyItemChanged(pos);
     }
 
     public void setList(List<Note> notes) {
-        this.allNotes = notes;
-        this.showedNotes = new ArrayList<>(notes);
+        this.showedNotes = notes;
         notifyDataSetChanged();
     }
 

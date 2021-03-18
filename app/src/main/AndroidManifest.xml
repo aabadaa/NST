@@ -17,13 +17,9 @@
         android:roundIcon="@mipmap/app_icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".UI.NoteActivity" />
         <activity
             android:name=".UI.OnFLyActivity"
             android:excludeFromRecents="true"
-            android:finishOnCloseSystemDialogs="false"
-            android:showWhenLocked="true"
-            android:allowTaskReparenting="true"
             android:theme="@style/Dialog">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -32,11 +28,9 @@
         <activity android:name=".UI.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <service
             android:name=".TileService"
             android:icon="@drawable/tile_ic"

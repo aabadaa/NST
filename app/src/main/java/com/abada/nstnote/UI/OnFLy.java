@@ -17,7 +17,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
 import com.abada.nstnote.Repositories.IOManager;
-import com.abada.nstnote.ViewModels.SingleNoteModel;
+import com.abada.nstnote.Utilities.State;
+import com.abada.nstnote.ViewModels.SingleNoteViewModel;
 
 public abstract class OnFLy extends FrameLayout {
     //Views
@@ -29,7 +30,7 @@ public abstract class OnFLy extends FrameLayout {
     //others
     private final Application application;
     //Models
-    SingleNoteModel viewModel;
+    SingleNoteViewModel viewModel;
     //data
     private Note newNote;
     private String toastText = "Saved";
@@ -37,20 +38,20 @@ public abstract class OnFLy extends FrameLayout {
     public OnFLy(Application application) {
         super(application);
         this.application = application;
-        this.v = LayoutInflater.from(application).inflate(R.layout.activity_popup, this);
+        this.v = LayoutInflater.from(application).inflate(R.layout.popup_layout, this);
         iom = IOManager.getInstance(application);
         save = v.findViewById(R.id.save);
         body = v.findViewById(R.id.note);
         cancel = v.findViewById(R.id.cancel);
-        viewModel = new ViewModelProvider.AndroidViewModelFactory(application).create(SingleNoteModel.class);
-        viewModel.getNote().observeForever(note -> body.setText(note.getBody()));
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(application).create(SingleNoteViewModel.class);
+        viewModel.getNoteLiveData().observeForever(note -> body.setText(note.getBody()));
         save.setOnClickListener(v1 -> {
             save();
             doClose();
         });
         cancel.setOnClickListener(v1 -> {
             toastText = "Canceled";
-            viewModel.getNote().setValue(new Note());
+            viewModel.getNoteLiveData().setValue(new Note());
             doClose();
         });
         showHideKeyboard();
@@ -63,7 +64,7 @@ public abstract class OnFLy extends FrameLayout {
             if (body.getText().toString().isEmpty())
                 toastText = "Canceled";
             else {
-                viewModel.getNote().setValue(new Note(body.getText().toString()));
+                viewModel.getNoteLiveData().setValue(new Note(body.getText().toString()));
                 toastText = "Kept";
             }
             doClose();
@@ -88,11 +89,11 @@ public abstract class OnFLy extends FrameLayout {
         if (header.length() > 30)
             header = header.substring(30);
         newNote = new Note(header, body);
-        viewModel.getNote().setValue(newNote);
+        viewModel.getNoteLiveData().setValue(newNote);
         if (newNote.getBody().isEmpty()) {
             toastText = "Canceled";
         } else {
-            viewModel.edit(SingleNoteModel.INSERT);
+            viewModel.edit(State.INSERT);
         }
     }
 
