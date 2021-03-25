@@ -8,26 +8,26 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.abada.nstnote.Events.OnCheckListener;
+import com.abada.nstnote.Utilities.Checkable;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
-    private final OnCheckListener onCheckListener;
     private final View.OnClickListener itemClickListener;
     private final Context context;
     private List<Note> showedNotes;
 
 
-    public NoteAdapter(Context context, List<Note> notes, View.OnClickListener itemClickListener, OnCheckListener onCheckListener) {
+    public NoteAdapter(Context context, LiveData<List<Note>> notes,
+                       View.OnClickListener itemClickListener) {
         this.context = context;
-        this.showedNotes = notes;
+        this.showedNotes = notes.getValue();
         this.itemClickListener = itemClickListener;
-        this.onCheckListener = onCheckListener;
     }
 
     @NonNull
@@ -42,7 +42,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     @Override
     public void onBindViewHolder(@NonNull NoteHolder holder, int position) {
         Note note = showedNotes.get(position);
-        note.setOnCheckListener(onCheckListener);
         TextView header = holder.header;
         TextView date = holder.date;
         header.setText(note.getHeader());
@@ -59,10 +58,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     @Override
     public int getItemCount() {
-        return showedNotes.size();
+        return showedNotes == null ? 0 : showedNotes.size();
     }
-
-
 
     public Context getContext() {
         return context;
@@ -79,19 +76,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             e.printStackTrace();
         }
     }
-
-    public void insertItem(Note note) {
-        showedNotes.add(note);
-    }
-
-    public void updateItem(Note note) {
-        int pos = showedNotes.indexOf(note);
-        showedNotes.set(pos, note);
-    }
-
     public void setList(List<Note> notes) {
         this.showedNotes = notes;
         notifyDataSetChanged();
+        for (int i = 0; i < getItemCount(); i++)
+            notifyItemChanged(i);
+
     }
 
     public Note getItem(int position) {
@@ -107,7 +97,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     }
 
     public void checkALL() {
-        int x = onCheckListener.getSelectedCount();
+        int x = Checkable.getCheckCounter();
         boolean allIsChecked = x == showedNotes.size();
         for (int i = 0; i < showedNotes.size(); i++)
             if (!showedNotes.get(i).isChecked() ^ allIsChecked)
@@ -139,5 +129,4 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             date = v.findViewById(R.id.list_item_date);
         }
     }
-
 }

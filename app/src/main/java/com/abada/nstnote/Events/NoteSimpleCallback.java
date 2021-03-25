@@ -8,16 +8,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.abada.nstnote.Note;
 import com.abada.nstnote.NoteAdapter;
-import com.abada.nstnote.Tools;
+import com.abada.nstnote.Utilities.Tools;
+import com.abada.nstnote.ViewModels.NotesViewModel;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
     private final NoteAdapter noteAdapter;
+    private final NotesViewModel notesViewModel;
 
-    public NoteSimpleCallback(NoteAdapter noteAdapter, int dragDirs, int swipeDirs) {
+    public NoteSimpleCallback(NotesViewModel notesViewModel, NoteAdapter noteAdapter, int dragDirs, int swipeDirs) {
         super(dragDirs, swipeDirs);
         this.noteAdapter = noteAdapter;
+        this.notesViewModel = notesViewModel;
     }
 
     @Override
@@ -26,19 +29,14 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
         return false;
     }
 
-    @Override
-    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        int pos = viewHolder.getAdapterPosition();
-        switch (direction) {
-            case ItemTouchHelper.LEFT:
-                noteAdapter.checkAt(pos);
-                break;
-            case ItemTouchHelper.RIGHT:
-                Note note = noteAdapter.getItem(pos);
-                Tools.copy(noteAdapter.getContext(), note);
-                noteAdapter.notifyItemChanged(pos);
-                break;
-        }
+    public static void setNoteCallback(NotesViewModel notesViewModel, RecyclerView recyclerView) {
+
+        new ItemTouchHelper(
+                new NoteSimpleCallback(notesViewModel,
+                        (NoteAdapter) recyclerView.getAdapter(),
+                        0,
+                        ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT))
+                .attachToRecyclerView(recyclerView);
     }
 
     @Override
@@ -53,6 +51,22 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
                 .decorate();
 
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+    }
+
+    @Override
+    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+        int pos = viewHolder.getAdapterPosition();
+        switch (direction) {
+            case ItemTouchHelper.LEFT:
+                noteAdapter.checkAt(pos);
+                notesViewModel.checkAt(pos);
+                break;
+            case ItemTouchHelper.RIGHT:
+                Note note = noteAdapter.getItem(pos);
+                Tools.copy(noteAdapter.getContext(), note);
+                noteAdapter.notifyItemChanged(pos);
+                break;
+        }
     }
 }
 

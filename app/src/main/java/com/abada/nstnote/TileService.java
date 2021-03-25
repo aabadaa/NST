@@ -10,8 +10,8 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.abada.nstnote.UI.Activities.OnFLyActivity;
 import com.abada.nstnote.UI.OnFLy;
-import com.abada.nstnote.UI.OnFLyActivity;
 
 public class TileService extends android.service.quicksettings.TileService {
     public static boolean clicked = false;

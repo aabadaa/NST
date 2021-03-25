@@ -1,4 +1,4 @@
-package com.abada.nstnote.UI;
+package com.abada.nstnote.UI.Activities;
 
 
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.abada.nstnote.TileService;
+import com.abada.nstnote.UI.OnFLy;
 
 public class OnFLyActivity extends AppCompatActivity {
     @Override
@@ -21,6 +22,5 @@ public class OnFLyActivity extends AppCompatActivity {
         };
         addContentView(o, new ConstraintLayout.LayoutParams(-2, -2));
     }
-
 
 }

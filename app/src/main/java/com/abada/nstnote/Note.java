@@ -7,16 +7,16 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import com.abada.nstnote.Events.OnCheckListener;
+import com.abada.nstnote.Utilities.Checkable;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 @Entity(tableName = "notes")
-public class Note {
-    public static final String ID = "ID";
+public class Note extends Checkable {
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
     public long id;
     @ColumnInfo(name = "header")
     private String header = "";
@@ -24,11 +24,8 @@ public class Note {
     private String body = "";
     @ColumnInfo(name = "date")
     private String date;
-    @Ignore
-    private boolean checked = false;
-    @Ignore
-    private OnCheckListener onCheckListener;
 
+    @Ignore
     public Note() {
         setDate();
     }
@@ -46,9 +43,10 @@ public class Note {
         setDate();
     }
 
-    public Note(String header, String body, String date) {
+    public Note(String header, String body, long id) {
         this(header, body);
-        setDate(date);
+        setDate();
+        this.id = id;
     }
 
     public String getHeader() {
@@ -63,9 +61,6 @@ public class Note {
         return date;
     }
 
-    public boolean isChecked() {
-        return checked;
-    }
 
     public void setHeader(String header) {
         this.header = header;
@@ -85,20 +80,6 @@ public class Note {
         date = sm.format(currentTime);
     }
 
-    public void setOnCheckListener(OnCheckListener onCheckListener) {
-        this.onCheckListener = onCheckListener;
-    }
-
-    public void check() {
-        checked = !checked;
-        if (onCheckListener != null) {
-            onCheckListener.onCheck(checked);
-        }
-    }
-
-    public boolean contains(CharSequence in) {
-        return header.contains(in) || body.contains(in);
-    }
 
     public boolean isEmpty() {
         return header.isEmpty() && body.isEmpty();
@@ -107,11 +88,9 @@ public class Note {
     @Override
     public String toString() {
         return "Note{" +
-                "id=" + id +
-                ", header='" + header + '\'' +
-                ", body='" + body + '\'' +
-                ", date='" + date + '\'' +
-                '}';
+                ",[" + header + ']' +
+                "{" + body + '}' +
+                date;
     }
 
     @Override

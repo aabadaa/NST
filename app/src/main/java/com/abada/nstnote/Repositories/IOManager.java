@@ -3,11 +3,9 @@ package com.abada.nstnote.Repositories;
 import android.app.Application;
 import android.util.Log;
 
-import androidx.core.util.Pair;
 import androidx.lifecycle.MutableLiveData;
 
 import com.abada.nstnote.Note;
-import com.abada.nstnote.Utilities.State;
 
 import java.util.List;
 
@@ -17,13 +15,12 @@ public class IOManager {
     private final MyRoom room;
     private final NoteDao dao;
     private final MutableLiveData<List<Note>> notes;
-    private final MutableLiveData<Pair<State, Note>> saveChanges;
+
     private IOManager(Application application) {
         room = MyRoom.getInstance(application);
         dao = room.getDao();
-        saveChanges = new MutableLiveData<>();
         notes = new MutableLiveData<>();
-        getAll();
+        getAll("");
     }
 
     public static IOManager getInstance(Application application) {
@@ -32,8 +29,16 @@ public class IOManager {
         return instance;
     }
 
-    private void getAll() {
-        room.execute(() -> notes.postValue(dao.getAll()));
+    public void getAll(String query) {
+        Log.i(TAG, "getAll: ");
+        room.execute(() -> {
+            List<Note> temp = notes.getValue();
+            notes.postValue(dao.getAll(query));
+            if (temp != null)
+                for (Note n : temp)
+                    if (n.isChecked())
+                        n.check();
+        });
     }
 
     public MutableLiveData<List<Note>> getNotes() {
@@ -41,39 +46,32 @@ public class IOManager {
     }
 
     public void insert(Note note) {
-        Log.i(TAG, "writeNote: ");
-        saveChanges.setValue(new Pair(State.INSERT, note));
         note.setDate();
-        room.execute(() -> {
-            note.id = dao.insert(note);
-        });
+        room.execute(() -> note.id = dao.insert(note));
+        List<Note> temp = notes.getValue();
+        if (!temp.contains(note))
+            notes.getValue().add(note);
+        else {
+            int index = temp.indexOf(note);
+            if (temp.get(index).isChecked())
+                note.check();
+            temp.set(temp.indexOf(note), note);
+        }
+        Log.i(TAG, "insert: ");
+    }
 
+    public void check(Note note) {
+        room.execute(() -> dao.insert(note));
     }
 
     public void delete(Note... notes) {
-        if (notes.length == 1)
-            saveChanges.setValue(new Pair(State.DELETE, notes[0]));
-        else {
-            this.notes.getValue().remove(notes);
-            this.notes.postValue(this.notes.getValue());
-        }
         room.execute(() -> dao.delete(notes));
-    }
-
-
-    public void update(Note note) {
-        saveChanges.setValue(new Pair(State.UPDATE, note));
-        room.execute(() -> {
-            dao.update(note);
-        });
-    }
-
-    public MutableLiveData<Pair<State, Note>> getSaveChanges() {
-        return saveChanges;
+        for (Note note : notes)
+            this.notes.getValue().remove(note);
     }
 
     public void getNoteById(MutableLiveData<Note> note, long id) {
-        if (id == -1)
+        if (id == 0)
             note.setValue(new Note());
         else
             room.execute(() -> note.postValue(dao.getNoteById(id)));

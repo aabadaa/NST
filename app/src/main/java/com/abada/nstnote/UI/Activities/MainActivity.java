@@ -1,4 +1,4 @@
-package com.abada.nstnote.UI;
+package com.abada.nstnote.UI.Activities;
 
 import android.Manifest;
 import android.content.Intent;
@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         storagePermissionGranted();
     }
 
