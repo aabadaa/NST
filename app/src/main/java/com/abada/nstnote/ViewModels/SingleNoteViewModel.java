@@ -9,6 +9,8 @@ import com.abada.nstnote.Note;
 import com.abada.nstnote.Repositories.IOManager;
 import com.abada.nstnote.Utilities.State;
 
+import java.util.concurrent.Future;
+
 public class SingleNoteViewModel extends AndroidViewModel {
     private final MutableLiveData<Note> note;
     private final IOManager iom;
@@ -23,21 +25,20 @@ public class SingleNoteViewModel extends AndroidViewModel {
         return note;
     }
 
-    public void edit(State choice) {
+    public Future<Long> edit(State choice) {
         switch (choice) {
             case INSERT:
-                iom.insert(note.getValue());
-                break;
+                return iom.insert(note.getValue());
             case DELETE:
                 iom.delete(note.getValue());
                 break;
             default:
                 throw new RuntimeException("Wrong choice");
         }
+        return null;
     }
 
     public void getNote(long id) {
         iom.getNoteById(note, id);
     }
-
 }

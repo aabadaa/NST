@@ -23,5 +23,4 @@ public abstract class NoteDao {
 
     @Query("select*from notes where id=:id")
     public abstract Note getNoteById(long id);
-
 }

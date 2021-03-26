@@ -40,8 +40,6 @@ public class Checkable {
 
         public void uncheck() {
             counter.postValue(--realCounter);
-
         }
-
     }
 }

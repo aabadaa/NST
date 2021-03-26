@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         if (!Settings.canDrawOverlays(this)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, 1234);
+            startActivity(intent);
         }
     }
 

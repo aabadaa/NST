@@ -20,6 +20,7 @@
         <activity
             android:name=".UI.Activities.OnFLyActivity"
             android:excludeFromRecents="true"
+            android:showOnLockScreen="true"
             android:theme="@style/Dialog">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />

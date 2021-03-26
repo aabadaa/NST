@@ -19,11 +19,11 @@ public class Note extends Checkable {
     @ColumnInfo(name = "id")
     public long id;
     @ColumnInfo(name = "header")
-    private String header = "";
+    public String header = "";
     @ColumnInfo(name = "body")
-    private String body = "";
+    public String body = "";
     @ColumnInfo(name = "date")
-    private String date;
+    public String date;
 
     @Ignore
     public Note() {
@@ -43,41 +43,23 @@ public class Note extends Checkable {
         setDate();
     }
 
+    @Ignore
     public Note(String header, String body, long id) {
         this(header, body);
         setDate();
         this.id = id;
     }
 
-    public String getHeader() {
-        return header;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-
-    public void setHeader(String header) {
-        this.header = header;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public void setDate(String date) {
+    public Note(String header, String body, String date, long id) {
+        this(header, body, id);
         this.date = date;
     }
 
-    public void setDate() {
+    public Note setDate() {
         Date currentTime = Calendar.getInstance().getTime();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
         date = sm.format(currentTime);
+        return this;
     }
 
 
@@ -104,6 +86,6 @@ public class Note extends Checkable {
     public boolean equalsIgnoreDate(Note other) {
         if (other == null)
             return false;
-        return header.equals(other.getHeader()) && body.equals(other.getBody());
+        return header.equals(other.header) && body.equals(other.body);
     }
 }

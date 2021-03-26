@@ -23,7 +23,8 @@
         android:textColor="@color/fontColor"
         android:textSize="24sp"
         android:focusableInTouchMode="false"
-        android:maxLines="1"
+        android:ellipsize="end"
+        android:singleLine="true"
         tools:text="header" />
 
     <TextView

@@ -9,9 +9,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.abada.nstnote.Utilities.Checkable;
+import com.abada.nstnote.Utilities.NoteDiffUtil;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,11 +23,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     private final View.OnClickListener itemClickListener;
     private final Context context;
     private List<Note> showedNotes;
-
+    private final LiveData<List<Note>> notesLiveData;
 
     public NoteAdapter(Context context, LiveData<List<Note>> notes,
                        View.OnClickListener itemClickListener) {
         this.context = context;
+        this.notesLiveData = notes;
         this.showedNotes = notes.getValue();
         this.itemClickListener = itemClickListener;
     }
@@ -44,8 +47,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         Note note = showedNotes.get(position);
         TextView header = holder.header;
         TextView date = holder.date;
-        header.setText(note.getHeader());
-        date.setText(note.getDate());
+        header.setText(note.header == null || note.header.isEmpty() ? note.body : note.header);
+        date.setText(note.date);
         holder.id = note.id;
         Drawable background;
         if (note.isChecked())
@@ -76,12 +79,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             e.printStackTrace();
         }
     }
-    public void setList(List<Note> notes) {
-        this.showedNotes = notes;
-        notifyDataSetChanged();
-        for (int i = 0; i < getItemCount(); i++)
-            notifyItemChanged(i);
 
+    public void setList() {
+        List<Note> notes = notesLiveData.getValue();
+        NoteDiffUtil noteDiffUtil = new NoteDiffUtil(showedNotes, notes);
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(noteDiffUtil);
+        this.showedNotes = notes;
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public Note getItem(int position) {

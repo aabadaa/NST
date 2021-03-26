@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -44,7 +45,7 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         Log.i(TAG, "onCreate: ");
         vvv = super.onCreateView(inflater, parent, savedInstanceState);
         setHasOptionsMenu(true);
@@ -58,15 +59,17 @@ public class MainFragment extends Fragment {
         button = view.findViewById(R.id.new_note_button);
         recyclerView = view.findViewById(R.id.rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        swipeRefreshLayout = view.findViewById(R.id.refresh);
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            viewModel.update();
-        });
         noteAdapter = new NoteAdapter(getActivity(), viewModel.getNotes(), getItemClickListener());
+        recyclerView.setAdapter(noteAdapter);
+        NoteSimpleCallback.setNoteCallback(viewModel, recyclerView);
+        swipeRefreshLayout = view.findViewById(R.id.refresh);
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.update());
+
         viewModel.getNotes().observeForever(notes -> {
-            setNoteAdapter();
+            noteAdapter.setList();
             swipeRefreshLayout.setRefreshing(false);
         });
+        button.setOnClickListener(getAddListener());
         Checkable.counter.observe(getActivity(), integer -> enableSelect(integer > 0));
         Checkable.counter.observeForever(i -> Log.i(TAG, "onViewCreated: " + i));
     }
@@ -78,7 +81,7 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main_menu, menu);
         MenuItem menuItem = menu.findItem(R.id.search_action);
         SearchView searchView = (SearchView) menuItem.getActionView();
@@ -115,16 +118,11 @@ public class MainFragment extends Fragment {
         Navigation.findNavController(vvv).navigate(action);
     }
 
-    private void setNoteAdapter() {
-        recyclerView.setAdapter(noteAdapter);
-        noteAdapter.setList(viewModel.getNotes().getValue());
-        NoteSimpleCallback.setNoteCallback(viewModel, recyclerView);
-
-    }
-
     //listeners
     private View.OnClickListener getAddListener() {
-        return v1 -> toNoteFragment(0);
+        return v1 -> {
+            toNoteFragment(0);
+        };
     }
 
     private View.OnClickListener getDeleteListener() {

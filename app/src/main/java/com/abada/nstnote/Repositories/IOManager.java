@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.abada.nstnote.Note;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class IOManager {
     public final String TAG = this.getClass().getName();
@@ -31,13 +32,14 @@ public class IOManager {
 
     public void getAll(String query) {
         Log.i(TAG, "getAll: ");
-        room.execute(() -> {
+        room.submit(() -> {
             List<Note> temp = notes.getValue();
             notes.postValue(dao.getAll(query));
             if (temp != null)
                 for (Note n : temp)
                     if (n.isChecked())
                         n.check();
+            return 0;
         });
     }
 
@@ -45,35 +47,45 @@ public class IOManager {
         return notes;
     }
 
-    public void insert(Note note) {
-        note.setDate();
-        room.execute(() -> note.id = dao.insert(note));
+    public Future<Long> insert(Note note) {
         List<Note> temp = notes.getValue();
         if (!temp.contains(note))
-            notes.getValue().add(note);
+            notes.getValue().add(note.setDate());
         else {
             int index = temp.indexOf(note);
+            if (!note.equalsIgnoreDate(temp.get(index)))
+                note.setDate();
             if (temp.get(index).isChecked())
                 note.check();
             temp.set(temp.indexOf(note), note);
         }
         Log.i(TAG, "insert: ");
+        return room.submit(() -> note.id = dao.insert(note));
     }
 
     public void check(Note note) {
-        room.execute(() -> dao.insert(note));
+        room.submit(() -> dao.insert(note));
     }
 
     public void delete(Note... notes) {
-        room.execute(() -> dao.delete(notes));
-        for (Note note : notes)
+        room.submit(() -> {
+            dao.delete(notes);
+            return 0;
+        });
+        for (Note note : notes) {
             this.notes.getValue().remove(note);
+            if (note.isChecked())
+                note.check();
+        }
     }
 
     public void getNoteById(MutableLiveData<Note> note, long id) {
         if (id == 0)
             note.setValue(new Note());
         else
-            room.execute(() -> note.postValue(dao.getNoteById(id)));
+            room.submit(() -> {
+                note.postValue(dao.getNoteById(id));
+                return id;
+            });
     }
 }

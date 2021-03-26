@@ -33,7 +33,7 @@ public class NoteFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         Log.i(TAG, "onCreate: ");
         return v = super.onCreateView(inflater, parent, savedInstanceState);
     }
@@ -44,8 +44,8 @@ public class NoteFragment extends Fragment {
         body = view.findViewById(R.id.note_text);
         viewModel = new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication()).create(SingleNoteViewModel.class);
         viewModel.getNoteLiveData().observe(getActivity(), note -> {
-            header.setText(note.getHeader());
-            body.setText(note.getBody());
+            header.setText(note.header);
+            body.setText(note.body);
         });
         args = NoteFragmentArgs.fromBundle(getArguments());
         id = args.getId();
@@ -58,7 +58,12 @@ public class NoteFragment extends Fragment {
     public void onPause() {
         super.onPause();
         cur = viewModel.getNoteLiveData().getValue();
-        viewModel.getNoteLiveData().setValue(new Note(header.getText().toString(), body.getText().toString(), id));
+        Note newNote = new Note(header.getText().toString(), body.getText().toString());
+        if (cur != null) {
+            newNote.id = cur.id;
+            newNote.date = cur.date;
+        }
+        viewModel.getNoteLiveData().setValue(newNote);
     }
 
     @Override

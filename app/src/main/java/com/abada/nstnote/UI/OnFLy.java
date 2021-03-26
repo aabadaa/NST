@@ -17,8 +17,12 @@ import androidx.lifecycle.ViewModelProvider;
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
 import com.abada.nstnote.Repositories.IOManager;
+import com.abada.nstnote.TileService;
 import com.abada.nstnote.Utilities.State;
 import com.abada.nstnote.ViewModels.SingleNoteViewModel;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public abstract class OnFLy extends FrameLayout {
     //Views
@@ -31,8 +35,6 @@ public abstract class OnFLy extends FrameLayout {
     private final Application application;
     //Models
     SingleNoteViewModel viewModel;
-    //data
-    private Note newNote;
     private String toastText = "Saved";
 
     public OnFLy(Application application) {
@@ -44,30 +46,37 @@ public abstract class OnFLy extends FrameLayout {
         body = v.findViewById(R.id.note);
         cancel = v.findViewById(R.id.cancel);
         viewModel = new ViewModelProvider.AndroidViewModelFactory(application).create(SingleNoteViewModel.class);
-        viewModel.getNoteLiveData().observeForever(note -> body.setText(note.getBody()));
+        viewModel.getNoteLiveData().observeForever(note -> body.setText(note.body));
         save.setOnClickListener(v1 -> {
             save();
             doClose();
+            TileService.lastNoteId = null;
+
         });
         cancel.setOnClickListener(v1 -> {
             toastText = "Canceled";
-            viewModel.getNoteLiveData().setValue(new Note());
             doClose();
+            TileService.lastNoteId = null;
         });
         showHideKeyboard();
+        if (TileService.lastNoteId != null)
+            viewModel.getNote(TileService.lastNoteId);
+        else
+            TileService.lastNoteId = 0L;
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         Log.i("?", "dispatchKeyEventPreIme: " + event);
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            if (body.getText().toString().isEmpty())
+            if (body.getText().toString().isEmpty()) {
                 toastText = "Canceled";
-            else {
-                viewModel.getNoteLiveData().setValue(new Note(body.getText().toString()));
+            } else {
+                save();
                 toastText = "Kept";
             }
             doClose();
+            return true;
         }
         return super.dispatchKeyEvent(event);
     }
@@ -77,23 +86,28 @@ public abstract class OnFLy extends FrameLayout {
     private void doClose() {
         Toast.makeText(application, toastText, Toast.LENGTH_SHORT).show();
         close();
-
     }
 
     private void save() {
-        toastText = "saved";
+        toastText = "Saved";
         String body = this.body.getText().toString();
-        String header = body;
-        if (header.contains("\n"))
-            header = header.substring(0, header.indexOf("\n"));
-        if (header.length() > 30)
-            header = header.substring(30);
-        newNote = new Note(header, body);
+        Note newNote = new Note(body);
+        if (TileService.lastNoteId != null)
+            newNote.id = TileService.lastNoteId;
         viewModel.getNoteLiveData().setValue(newNote);
-        if (newNote.getBody().isEmpty()) {
+        if (newNote.body.isEmpty()) {
             toastText = "Canceled";
         } else {
-            viewModel.edit(State.INSERT);
+            Future<Long> lastId = viewModel.edit(State.INSERT);
+            new Thread(() -> {
+                while (!lastId.isDone()) ;
+                try {
+                    TileService.lastNoteId = lastId.get();
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            ).start();
         }
     }
 
