@@ -38,6 +38,7 @@ public class FABOnLongClickListener implements View.OnLongClickListener {
         }
 
         Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        assert vibrator != null;
         vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
         return true;
     }

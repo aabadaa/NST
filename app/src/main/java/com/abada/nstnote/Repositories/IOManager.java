@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.abada.nstnote.Note;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 public class IOManager {
@@ -39,7 +40,8 @@ public class IOManager {
                 for (Note n : temp)
                     if (n.isChecked())
                         n.check();
-            return 0;
+            Log.i(TAG, "getAll: " + notes.getValue().size());
+            return null;
         });
     }
 
@@ -49,6 +51,7 @@ public class IOManager {
 
     public Future<Long> insert(Note note) {
         List<Note> temp = notes.getValue();
+        assert temp != null;
         if (!temp.contains(note))
             notes.getValue().add(note.setDate());
         else {
@@ -70,10 +73,10 @@ public class IOManager {
     public void delete(Note... notes) {
         room.submit(() -> {
             dao.delete(notes);
-            return 0;
+            return null;
         });
         for (Note note : notes) {
-            this.notes.getValue().remove(note);
+            Objects.requireNonNull(this.notes.getValue()).remove(note);
             if (note.isChecked())
                 note.check();
         }

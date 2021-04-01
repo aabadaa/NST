@@ -24,8 +24,8 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
     }
 
     @Override
-    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder
-            viewHolder, RecyclerView.ViewHolder target) {
+    public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder
+            viewHolder, @NonNull RecyclerView.ViewHolder target) {
         return false;
     }
 

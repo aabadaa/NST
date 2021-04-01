@@ -12,70 +12,57 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import androidx.lifecycle.ViewModelProvider;
-
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
-import com.abada.nstnote.Repositories.IOManager;
-import com.abada.nstnote.TileService;
 import com.abada.nstnote.Utilities.State;
 import com.abada.nstnote.ViewModels.SingleNoteViewModel;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory;
+import static com.abada.nstnote.TileService.lastNoteId;
+
 public abstract class OnFLy extends FrameLayout {
-    //Views
-    private final View v;
-    private final Button save;
-    private final Button cancel;
     private final EditText body;
-    private final IOManager iom;
     //others
     private final Application application;
     //Models
     SingleNoteViewModel viewModel;
-    private String toastText = "Saved";
+    private String toastText;
 
     public OnFLy(Application application) {
         super(application);
         this.application = application;
-        this.v = LayoutInflater.from(application).inflate(R.layout.popup_layout, this);
-        iom = IOManager.getInstance(application);
-        save = v.findViewById(R.id.save);
+        View v = LayoutInflater.from(application).inflate(R.layout.popup_layout, this);
+        Button save = v.findViewById(R.id.save);
+        save.setOnClickListener(v1 -> save(true));
         body = v.findViewById(R.id.note);
-        cancel = v.findViewById(R.id.cancel);
-        viewModel = new ViewModelProvider.AndroidViewModelFactory(application).create(SingleNoteViewModel.class);
-        viewModel.getNoteLiveData().observeForever(note -> body.setText(note.body));
-        save.setOnClickListener(v1 -> {
-            save();
-            doClose();
-            TileService.lastNoteId = null;
-
-        });
-        cancel.setOnClickListener(v1 -> {
-            toastText = "Canceled";
-            doClose();
-            TileService.lastNoteId = null;
-        });
+        Button cancel = v.findViewById(R.id.cancel);
+        cancel.setOnClickListener(v1 -> cancel());
         showHideKeyboard();
-        if (TileService.lastNoteId != null)
-            viewModel.getNote(TileService.lastNoteId);
-        else
-            TileService.lastNoteId = 0L;
+        viewModel = new AndroidViewModelFactory(application).create(SingleNoteViewModel.class);
+        viewModel.getNoteLiveData().observeForever(note -> {
+            body.setText(note.body);
+            body.setSelection(body.length());
+        });
+        try {
+            viewModel.getNote(lastNoteId != null ? lastNoteId.get() : 0);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         Log.i("?", "dispatchKeyEventPreIme: " + event);
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            if (body.getText().toString().isEmpty()) {
-                toastText = "Canceled";
-            } else {
-                save();
-                toastText = "Kept";
-            }
-            doClose();
+            if (body.getText().toString().isEmpty())
+                cancel();
+            else
+                save(false);
+
             return true;
         }
         return super.dispatchKeyEvent(event);
@@ -88,33 +75,39 @@ public abstract class OnFLy extends FrameLayout {
         close();
     }
 
-    private void save() {
+    private void save(boolean doPop) {
+        assert viewModel.getNoteLiveData().getValue() != null;
         toastText = "Saved";
         String body = this.body.getText().toString();
         Note newNote = new Note(body);
-        if (TileService.lastNoteId != null)
-            newNote.id = TileService.lastNoteId;
+        newNote.id = viewModel.getNoteLiveData().getValue().id;
+
         viewModel.getNoteLiveData().setValue(newNote);
         if (newNote.body.isEmpty()) {
-            toastText = "Canceled";
+            cancel();
         } else {
-            Future<Long> lastId = viewModel.edit(State.INSERT);
-            new Thread(() -> {
-                while (!lastId.isDone()) ;
-                try {
-                    TileService.lastNoteId = lastId.get();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+            Future<Long> id = viewModel.edit(State.INSERT);
+            if (doPop) {
+                lastNoteId = null;
+            } else {
+                toastText = "Kept";
+                lastNoteId = id;
             }
-            ).start();
         }
+        doClose();
     }
 
     private void showHideKeyboard() {
         InputMethodManager inputMethodManager = (InputMethodManager) application.getSystemService(Context.INPUT_METHOD_SERVICE);
+        assert inputMethodManager != null;
         inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         body.requestFocus();
     }
 
+    private void cancel() {
+        toastText = "Canceled";
+        viewModel.edit(State.DELETE);
+        lastNoteId = null;
+        doClose();
+    }
 }

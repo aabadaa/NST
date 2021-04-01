@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.abada.nstnote.TileService;
 import com.abada.nstnote.UI.OnFLy;
 
 public class OnFLyActivity extends AppCompatActivity {
@@ -20,6 +21,7 @@ public class OnFLyActivity extends AppCompatActivity {
             @Override
             public void close() {
                 finish();
+                TileService.showed = false;
             }
         };
         addContentView(o, new ConstraintLayout.LayoutParams(-2, -2));

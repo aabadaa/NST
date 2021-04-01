@@ -13,11 +13,15 @@ import android.widget.Toast;
 import com.abada.nstnote.UI.Activities.OnFLyActivity;
 import com.abada.nstnote.UI.OnFLy;
 
+import java.util.concurrent.Future;
+
 public class TileService extends android.service.quicksettings.TileService {
-    public static Long lastNoteId = null;
+    public static Future<Long> lastNoteId;
+    public static boolean showed = false;
 
     @Override
     public void onClick() {
+        showed = true;
         Log.i("TAG", "onClick: " + lastNoteId);
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "You should give me the permission", Toast.LENGTH_SHORT).show();
@@ -29,18 +33,25 @@ public class TileService extends android.service.quicksettings.TileService {
             showOnFLyNote();
         sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
+
     @Override
     public void onStartListening() {
         Tile tile = getQsTile();
         tile.setIcon(Icon.createWithResource(this,
                 R.drawable.tile_ic));
         tile.setLabel(getString(R.string.tile_label));
-        tile.setState(lastNoteId != null && Settings.canDrawOverlays(this) ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+        tile.setState(lastNoteId != null && Settings.canDrawOverlays(this) ?
+                Tile.STATE_ACTIVE
+                : Tile.STATE_INACTIVE);
+        if (showed)
+            tile.setState(Tile.STATE_UNAVAILABLE);
         tile.updateTile();
     }
 
     private void showOnFLyNote() {
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        assert wm != null;
+
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -52,6 +63,7 @@ public class TileService extends android.service.quicksettings.TileService {
             @Override
             public void close() {
                 wm.removeView(this);
+                showed = false;
             }
         };
         wm.addView(o, params);

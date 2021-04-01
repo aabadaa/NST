@@ -27,7 +27,7 @@ public class NotesViewModel extends AndroidViewModel implements Filterable {
         super(application);
         iom = IOManager.getInstance(application);
         notes = iom.getNotes();
-        filter = new NotesFilter(notes, iom);
+        filter = new NotesFilter(iom);
     }
 
     public void deleteSelected(NoteAdapter noteAdapter) {
@@ -54,6 +54,7 @@ public class NotesViewModel extends AndroidViewModel implements Filterable {
         noteAdapter.checkALL();
         int x = Checkable.getCheckCounter();
         List<Note> showedNotes = notes.getValue();
+        assert showedNotes != null;
         boolean allIsChecked = x == showedNotes.size();
         for (int i = 0; i < showedNotes.size(); i++)
             if (!showedNotes.get(i).isChecked() ^ allIsChecked)

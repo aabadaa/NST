@@ -42,7 +42,7 @@ public abstract class MyRoom extends RoomDatabase {
 
     public abstract NoteDao getDao();
 
-    public Future<Long> submit(Callable callable) {
+    public Future<Long> submit(Callable<Long> callable) {
         return executor.submit(callable);
     }
 

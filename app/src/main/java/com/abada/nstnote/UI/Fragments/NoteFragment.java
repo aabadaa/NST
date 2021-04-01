@@ -42,12 +42,12 @@ public class NoteFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         header = view.findViewById(R.id.note_header);
         body = view.findViewById(R.id.note_text);
-        viewModel = new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication()).create(SingleNoteViewModel.class);
-        viewModel.getNoteLiveData().observe(getActivity(), note -> {
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()).create(SingleNoteViewModel.class);
+        viewModel.getNoteLiveData().observe(getViewLifecycleOwner(), note -> {
             header.setText(note.header);
             body.setText(note.body);
         });
-        args = NoteFragmentArgs.fromBundle(getArguments());
+        args = NoteFragmentArgs.fromBundle(requireArguments());
         id = args.getId();
         if (id != 0) {
             viewModel.getNote(id);
@@ -74,6 +74,7 @@ public class NoteFragment extends Fragment {
 
     void save() {
         Note newNote = viewModel.getNoteLiveData().getValue();
+        assert newNote != null;
         if (newNote.isEmpty())
             viewModel.edit(State.DELETE);
         else if (!newNote.isEmpty())

@@ -1,6 +1,7 @@
 package com.abada.nstnote.ViewModels;
 
 import android.app.Application;
+import android.util.Log;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
@@ -26,10 +27,12 @@ public class SingleNoteViewModel extends AndroidViewModel {
     }
 
     public Future<Long> edit(State choice) {
+        assert note.getValue() != null;
         switch (choice) {
             case INSERT:
                 return iom.insert(note.getValue());
             case DELETE:
+                Log.i("TAG", "edit: " + note.getValue().id);
                 iom.delete(note.getValue());
                 break;
             default:
