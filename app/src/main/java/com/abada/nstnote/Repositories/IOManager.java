@@ -3,6 +3,7 @@ package com.abada.nstnote.Repositories;
 import android.app.Application;
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.abada.nstnote.Note;
@@ -16,13 +17,12 @@ public class IOManager {
     private static IOManager instance;
     private final MyRoom room;
     private final NoteDao dao;
-    private final MutableLiveData<List<Note>> notes;
+    private String query = "";
+    private LiveData<List<Note>> notes;
 
     private IOManager(Application application) {
         room = MyRoom.getInstance(application);
         dao = room.getDao();
-        notes = new MutableLiveData<>();
-        getAll("");
     }
 
     public static IOManager getInstance(Application application) {
@@ -32,41 +32,22 @@ public class IOManager {
     }
 
     public void getAll(String query) {
-        Log.i(TAG, "getAll: ");
-        room.submit(() -> {
-            List<Note> temp = notes.getValue();
-            notes.postValue(dao.getAll(query));
-            if (temp != null)
-                for (Note n : temp)
-                    if (n.isChecked())
-                        n.check();
-            Log.i(TAG, "getAll: " + notes.getValue().size());
-            return null;
-        });
+        this.query = query;
+        notes = dao.getAll(query);
     }
 
-    public MutableLiveData<List<Note>> getNotes() {
+    public LiveData<List<Note>> getNotes() {
+        notes = dao.getAll(query);
         return notes;
     }
 
-    public Future<Long> insert(Note note) {
-        List<Note> temp = notes.getValue();
-        assert temp != null;
-        if (!temp.contains(note))
-            notes.getValue().add(note.setDate());
-        else {
-            int index = temp.indexOf(note);
-            if (!note.equalsIgnoreDate(temp.get(index)))
-                note.setDate();
-            if (temp.get(index).isChecked())
-                note.check();
-            temp.set(temp.indexOf(note), note);
-        }
+    public Future<List<Long>> insert(Note... notes) {
         Log.i(TAG, "insert: ");
-        return room.submit(() -> note.id = dao.insert(note));
+        return (Future<List<Long>>) room.submit(() -> dao.insert(notes));
     }
 
     public void check(Note note) {
+        note.check();
         room.submit(() -> dao.insert(note));
     }
 
@@ -80,6 +61,13 @@ public class IOManager {
             if (note.isChecked())
                 note.check();
         }
+    }
+
+    public void deleteAll() {
+        room.submit(() -> {
+            dao.deleteAll();
+            return 0L;
+        });
     }
 
     public void getNoteById(MutableLiveData<Note> note, long id) {

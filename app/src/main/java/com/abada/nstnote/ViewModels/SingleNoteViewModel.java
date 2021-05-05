@@ -10,6 +10,7 @@ import com.abada.nstnote.Note;
 import com.abada.nstnote.Repositories.IOManager;
 import com.abada.nstnote.Utilities.State;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 public class SingleNoteViewModel extends AndroidViewModel {
@@ -26,7 +27,7 @@ public class SingleNoteViewModel extends AndroidViewModel {
         return note;
     }
 
-    public Future<Long> edit(State choice) {
+    public Future<List<Long>> edit(State choice) {
         assert note.getValue() != null;
         switch (choice) {
             case INSERT:

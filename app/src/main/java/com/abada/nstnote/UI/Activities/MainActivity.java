@@ -15,7 +15,6 @@ import com.abada.nstnote.R;
 
 public class MainActivity extends AppCompatActivity {
     public final String TAG = this.getClass().getName();
-
     public MainActivity() {
         super(R.layout.activity_main);
     }
@@ -23,11 +22,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         storagePermissionGranted();
     }
 
     public void storagePermissionGranted() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+
         if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED) {
             Log.v(TAG, "Permission is granted");

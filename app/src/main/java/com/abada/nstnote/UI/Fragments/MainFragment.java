@@ -23,7 +23,8 @@ import com.abada.nstnote.Events.FABScrollListener;
 import com.abada.nstnote.Events.NoteSimpleCallback;
 import com.abada.nstnote.NoteAdapter;
 import com.abada.nstnote.R;
-import com.abada.nstnote.Utilities.Checkable;
+import com.abada.nstnote.Repositories.IOManager;
+import com.abada.nstnote.Utilities.BackupManager;
 import com.abada.nstnote.Utilities.Tools;
 import com.abada.nstnote.ViewModels.NotesViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -38,8 +39,7 @@ public class MainFragment extends Fragment {
     //Others
     NotesViewModel viewModel;
     NoteAdapter noteAdapter;
-
-
+    BackupManager b;
     public MainFragment() {
         super(R.layout.fragment_main);
     }
@@ -68,13 +68,16 @@ public class MainFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(() -> viewModel.update());
 
-        viewModel.getNotes().observeForever(notes -> {
+        viewModel.getNotes().observe(requireActivity(), notes -> {
             noteAdapter.setList();
             swipeRefreshLayout.setRefreshing(false);
         });
-
-        Checkable.counter.observe(getViewLifecycleOwner(), integer -> enableSelect(integer > 0));
-        Checkable.counter.observeForever(i -> Log.i(TAG, "onViewCreated: " + i));
+        b = new BackupManager(requireContext(), IOManager.getInstance(getActivity().getApplication()));
+        Tools.createIns(getContext());
+        Tools.getIns().getCounter().observe(requireActivity(), i -> {
+            enableSelect(i > 0);
+            Log.i(TAG, "onViewCreated: " + i);
+        });
     }
 
     @Override
@@ -93,6 +96,16 @@ public class MainFragment extends Fragment {
                 viewModel.getFilter().filter(newText);
                 return true;
             }
+        });
+        MenuItem backup = menu.findItem(R.id.menu_backup);
+        MenuItem restore = menu.findItem(R.id.menu_restore);
+        backup.setOnMenuItemClickListener(item -> {
+            b.backUp();
+            return true;
+        });
+        restore.setOnMenuItemClickListener(item -> {
+            b.restore();
+            return true;
         });
     }
 
@@ -123,11 +136,11 @@ public class MainFragment extends Fragment {
     }
 
     private View.OnClickListener getDeleteListener() {
-        return v -> Tools.askDialog(getContext(), v1 -> viewModel.deleteSelected(noteAdapter), null);
+        return v -> Tools.getIns().askDialog(v1 -> viewModel.deleteSelected(noteAdapter), null);
     }
 
     private View.OnClickListener getSelectAllListener() {
-        return v -> viewModel.checkALL(noteAdapter);
+        return v -> viewModel.checkALL();
     }
 
     private View.OnClickListener getItemClickListener() {

@@ -12,7 +12,6 @@ import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.abada.nstnote.Utilities.Checkable;
 import com.abada.nstnote.Utilities.NoteDiffUtil;
 
 import java.util.LinkedList;
@@ -91,20 +90,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         return showedNotes.get(position);
     }
 
-    public void checkAt(int pos) {
-        Note note = showedNotes.get(pos);
-        notifyItemRemoved(pos);
-        note.check();
-        notifyItemInserted(pos);
-    }
-
-    public void checkALL() {
-        int x = Checkable.getCheckCounter();
-        boolean allIsChecked = x == showedNotes.size();
-        for (int i = 0; i < showedNotes.size(); i++)
-            if (!showedNotes.get(i).isChecked() ^ allIsChecked)
-                checkAt(i);
-    }
 
     public List<Note> deleteSelected() {
         List<Note> selected = new LinkedList<>();

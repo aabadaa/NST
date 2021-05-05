@@ -2,6 +2,7 @@ package com.abada.nstnote.UI;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import com.abada.nstnote.R;
 import com.abada.nstnote.Utilities.State;
 import com.abada.nstnote.ViewModels.SingleNoteViewModel;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -34,6 +36,7 @@ public abstract class OnFLy extends FrameLayout {
     public OnFLy(Application application) {
         super(application);
         this.application = application;
+        application.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         View v = LayoutInflater.from(application).inflate(R.layout.popup_layout, this);
         Button save = v.findViewById(R.id.save);
         save.setOnClickListener(v1 -> save(true));
@@ -47,7 +50,7 @@ public abstract class OnFLy extends FrameLayout {
             body.setSelection(body.length());
         });
         try {
-            viewModel.getNote(lastNoteId != null ? lastNoteId.get() : 0);
+            viewModel.getNote(lastNoteId != null ? lastNoteId.get().get(0) : 0);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -86,7 +89,7 @@ public abstract class OnFLy extends FrameLayout {
         if (newNote.body.isEmpty()) {
             cancel();
         } else {
-            Future<Long> id = viewModel.edit(State.INSERT);
+            Future<List<Long>> id = viewModel.edit(State.INSERT);
             if (doPop) {
                 lastNoteId = null;
             } else {

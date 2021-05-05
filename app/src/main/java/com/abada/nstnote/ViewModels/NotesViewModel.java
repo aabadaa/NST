@@ -6,19 +6,19 @@ import android.widget.Filter;
 import android.widget.Filterable;
 
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.LiveData;
 
 import com.abada.nstnote.Note;
 import com.abada.nstnote.NoteAdapter;
 import com.abada.nstnote.Repositories.IOManager;
-import com.abada.nstnote.Utilities.Checkable;
 import com.abada.nstnote.Utilities.NotesFilter;
+import com.abada.nstnote.Utilities.Tools;
 
 import java.util.List;
 
 public class NotesViewModel extends AndroidViewModel implements Filterable {
     private final String TAG = getClass().getName();
-    private final MutableLiveData<List<Note>> notes;
+    private final LiveData<List<Note>> notes;
     private final IOManager iom;
     private final Filter filter;
 
@@ -42,7 +42,7 @@ public class NotesViewModel extends AndroidViewModel implements Filterable {
         iom.getAll("");
     }
 
-    public MutableLiveData<List<Note>> getNotes() {
+    public LiveData<List<Note>> getNotes() {
         return notes;
     }
 
@@ -50,9 +50,8 @@ public class NotesViewModel extends AndroidViewModel implements Filterable {
         iom.check(notes.getValue().get(index));
     }
 
-    public void checkALL(NoteAdapter noteAdapter) {
-        noteAdapter.checkALL();
-        int x = Checkable.getCheckCounter();
+    public void checkALL() {
+        Integer x = Tools.getIns().getCounter().getValue();
         List<Note> showedNotes = notes.getValue();
         assert showedNotes != null;
         boolean allIsChecked = x == showedNotes.size();

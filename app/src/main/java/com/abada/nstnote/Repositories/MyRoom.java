@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@Database(entities = Note.class, version = 2, exportSchema = false)
+@Database(entities = Note.class, version = 6, exportSchema = false)
 public abstract class MyRoom extends RoomDatabase {
     private static MyRoom instance;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -27,6 +27,44 @@ public abstract class MyRoom extends RoomDatabase {
                     + " ADD COLUMN checker TEXT");
         }
     };
+    private static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            try {
+                database.execSQL("create table Note(id INTEGER primary key ,header TEXT, body TEXT,date TEXT)");
+                database.execSQL("insert into Note(id,header,body,date) select id,header,body,date from notes");
+                database.execSQL("drop table notes");
+            } catch (Exception e) {
+            }
+        }
+    };
+    private static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("create table note2(id INTEGER primary key ,header TEXT, body TEXT,date TEXT,checked TEXT)");
+            database.execSQL("insert into note2(id,header,body,date) select id,header,body,date from Note");
+            database.execSQL("drop table Note");
+            database.execSQL("alter table note2 rename to Note");
+
+        }
+    };
+    private static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("create table note2(id INTEGER primary key ,header TEXT, body TEXT,date TEXT,checked INTEGER not null default(0))");
+            database.execSQL("insert into note2(id,header,body,date) select id,header,body,date from Note");
+            database.execSQL("drop table Note");
+            database.execSQL("alter table note2 rename to Note");
+
+        }
+    };
+    private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+
+
+        }
+    };
 
     public static MyRoom getInstance(Application application) {
         if (instance == null) {
@@ -34,6 +72,10 @@ public abstract class MyRoom extends RoomDatabase {
                 if (instance == null)
                     instance = Room.databaseBuilder(application, MyRoom.class, "notesDB")
                             .addMigrations(MIGRATION_1_2)
+                            .addMigrations(MIGRATION_2_3)
+                            .addMigrations(MIGRATION_3_4)
+                            .addMigrations(MIGRATION_4_5)
+                            .addMigrations(MIGRATION_5_6)
                             .build();
             }
         }
@@ -42,7 +84,7 @@ public abstract class MyRoom extends RoomDatabase {
 
     public abstract NoteDao getDao();
 
-    public Future<Long> submit(Callable<Long> callable) {
+    public Future<?> submit(Callable<?> callable) {
         return executor.submit(callable);
     }
 

@@ -6,22 +6,49 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.lifecycle.MutableLiveData;
+
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Objects;
 
-public class Tools {
+import static android.content.ContentValues.TAG;
 
-    public static void copy(final Context context, final Note note) {
+public class Tools {
+    @SuppressLint("StaticFieldLeak")
+    private static Tools ins;
+    private final Context context;
+    private final MutableLiveData<Integer> counter;
+
+    private Tools(Context context) {
+        this.context = context;
+        counter = new MutableLiveData<>();
+    }
+
+    public static void createIns(Context context) {
+        if (ins == null)
+            ins = new Tools(context);
+    }
+
+    public static Tools getIns() {
+        return ins;
+    }
+
+    public void copy(final Note note) {
         ClipboardManager clipboard = (ClipboardManager)
                 context.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("" + note.header, "" + note.toString());
@@ -31,7 +58,7 @@ public class Tools {
     }
 
     @SuppressLint("SetTextI18n")
-    public static void askDialog(final Context context, View.OnClickListener yes, View.OnClickListener no) {
+    public void askDialog(View.OnClickListener yes, View.OnClickListener no) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         View v = LayoutInflater.from(context).inflate(R.layout.popup_layout, null);
         EditText text = v.findViewById(R.id.note);
@@ -57,5 +84,28 @@ public class Tools {
         });
         Objects.requireNonNull(d.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         d.show();
+    }
+
+    public String getCurrentDate() {
+        Date currentTime = Calendar.getInstance().getTime();
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+        return sm.format(currentTime);
+    }
+
+    public MutableLiveData<Integer> getCounter() {
+        return counter;
+    }
+
+    public void checkOne(boolean isChecked) {
+        String c = "counter";
+        SharedPreferences pref = context.getSharedPreferences(c, Context.MODE_PRIVATE);
+        int newValue = pref.getInt(c, 0) + (isChecked ? 1 : -1);
+        Log.i(TAG, "checkOne: " + newValue);
+        @SuppressLint("CommitPrefEdits")
+        SharedPreferences.Editor edit = pref.edit();
+        counter.postValue(newValue);
+        edit.putInt(c, newValue);
+        edit.apply();
+        Log.i(TAG, "checkOne: after edit " + pref.getInt(c, 0));
     }
 }

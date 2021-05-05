@@ -30,7 +30,6 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
     }
 
     public static void setNoteCallback(NotesViewModel notesViewModel, RecyclerView recyclerView) {
-
         new ItemTouchHelper(
                 new NoteSimpleCallback(notesViewModel,
                         (NoteAdapter) recyclerView.getAdapter(),
@@ -49,8 +48,8 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
                 .addSwipeRightLabel("Copy")
                 .create()
                 .decorate();
-
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+
     }
 
     @Override
@@ -58,12 +57,12 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
         int pos = viewHolder.getAdapterPosition();
         switch (direction) {
             case ItemTouchHelper.LEFT:
-                noteAdapter.checkAt(pos);
                 notesViewModel.checkAt(pos);
+                noteAdapter.notifyItemChanged(pos);
                 break;
             case ItemTouchHelper.RIGHT:
                 Note note = noteAdapter.getItem(pos);
-                Tools.copy(noteAdapter.getContext(), note);
+                Tools.getIns().copy(note);
                 noteAdapter.notifyItemChanged(pos);
                 break;
         }

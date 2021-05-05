@@ -1,5 +1,6 @@
 package com.abada.nstnote.Repositories;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -12,15 +13,18 @@ import java.util.List;
 
 @Dao
 public abstract class NoteDao {
-    @Query("select * from notes where header like '%'||:query||'%' or body like '%'||:query||'%'")
-    public abstract List<Note> getAll(String query);
+    @Query("select * from Note where header like '%'||:query||'%' or body like '%'||:query||'%'")
+    public abstract LiveData<List<Note>> getAll(String query);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    public abstract Long insert(Note note);
+    public abstract List<Long> insert(Note... notes);
 
     @Delete
     public abstract void delete(Note... note);
 
-    @Query("select*from notes where id=:id")
+    @Query("select*from Note where id=:id")
     public abstract Note getNoteById(long id);
+
+    @Query("delete from Note")
+    public abstract void deleteAll();
 }

@@ -13,11 +13,22 @@ import android.widget.Toast;
 import com.abada.nstnote.UI.Activities.OnFLyActivity;
 import com.abada.nstnote.UI.OnFLy;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 public class TileService extends android.service.quicksettings.TileService {
-    public static Future<Long> lastNoteId;
+    public static Future<List<Long>> lastNoteId;
     public static boolean showed = false;
+    private WindowManager wm;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        try {
+            wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        } catch (Exception e) {
+        }
+    }
 
     @Override
     public void onClick() {
@@ -31,7 +42,6 @@ public class TileService extends android.service.quicksettings.TileService {
             startActivity(new Intent(this, OnFLyActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         else
             showOnFLyNote();
-        sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
 
     @Override
@@ -49,8 +59,10 @@ public class TileService extends android.service.quicksettings.TileService {
     }
 
     private void showOnFLyNote() {
-        WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        assert wm != null;
+        if (wm == null) {
+            Toast.makeText(this, "wm is null", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -66,6 +78,10 @@ public class TileService extends android.service.quicksettings.TileService {
                 showed = false;
             }
         };
-        wm.addView(o, params);
+        try {
+            wm.addView(o, params);
+        } catch (Exception e) {
+
+        }
     }
 }

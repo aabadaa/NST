@@ -1,29 +1,21 @@
 package com.abada.nstnote;
 
-import android.annotation.SuppressLint;
-
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import com.abada.nstnote.Utilities.Checkable;
+import com.abada.nstnote.Utilities.Tools;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.io.Serializable;
 
-@Entity(tableName = "notes")
-public class Note extends Checkable {
+@Entity
+public class Note implements Serializable {
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    public long id;
-    @ColumnInfo(name = "header")
+    public Long id;
     public String header = "";
-    @ColumnInfo(name = "body")
     public String body = "";
-    @ColumnInfo(name = "date")
     public String date;
+    public boolean checked = false;
 
     @Ignore
     public Note() {
@@ -56,12 +48,18 @@ public class Note extends Checkable {
     }
 
     public Note setDate() {
-        Date currentTime = Calendar.getInstance().getTime();
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
-        date = sm.format(currentTime);
+        date = Tools.getIns().getCurrentDate();
         return this;
     }
 
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void check() {
+        checked = !checked;
+        Tools.getIns().checkOne(isChecked());
+    }
 
     public boolean isEmpty() {
         return header.isEmpty() && body.isEmpty();
@@ -80,7 +78,7 @@ public class Note extends Checkable {
         if (!(other instanceof Note))
             return false;
         Note o = (Note) other;
-        return id == o.id;
+        return id != null && o.id != null && id.equals(o.id);
     }
 
     public boolean equalsIgnoreDate(Note other) {
