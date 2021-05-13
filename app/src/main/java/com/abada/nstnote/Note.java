@@ -1,5 +1,6 @@
 package com.abada.nstnote;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
@@ -40,6 +41,16 @@ public class Note implements Serializable {
         this(header, body);
         setDate();
         this.id = id;
+    }
+
+    @Ignore
+    public Note(@NonNull Note note) {
+        header = note.header;
+        body = note.body;
+        date = note.date;
+        id = note.id;
+        checked = note.checked;
+
     }
 
     public Note(String header, String body, String date, long id) {

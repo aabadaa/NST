@@ -43,27 +43,25 @@ public class NoteFragment extends Fragment {
         header = view.findViewById(R.id.note_header);
         body = view.findViewById(R.id.note_text);
         viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()).create(SingleNoteViewModel.class);
-        viewModel.getNoteLiveData().observe(getViewLifecycleOwner(), note -> {
-            header.setText(note.header);
-            body.setText(note.body);
-        });
         args = NoteFragmentArgs.fromBundle(requireArguments());
         id = args.getId();
         if (id != 0) {
-            viewModel.getNote(id);
+            viewModel.getNote(id).observe(getViewLifecycleOwner(), note -> {
+                cur = note;
+                header.setText(note.header);
+                body.setText(note.body);
+            });
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        cur = viewModel.getNoteLiveData().getValue();
         Note newNote = new Note(header.getText().toString(), body.getText().toString());
         if (cur != null) {
             newNote.id = cur.id;
             newNote.date = cur.date;
         }
-        viewModel.getNoteLiveData().setValue(newNote);
     }
 
     @Override
@@ -73,11 +71,9 @@ public class NoteFragment extends Fragment {
     }
 
     void save() {
-        Note newNote = viewModel.getNoteLiveData().getValue();
-        assert newNote != null;
-        if (newNote.isEmpty())
-            viewModel.edit(State.DELETE);
-        else if (!newNote.isEmpty())
-            viewModel.edit(State.INSERT);
+        Note newNote = new Note(cur);
+        newNote.body = this.body.getText().toString();
+        newNote.header = this.header.getText().toString();
+        viewModel.edit(newNote, newNote.isEmpty() ? State.DELETE : State.INSERT);
     }
 }

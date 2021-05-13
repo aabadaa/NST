@@ -4,7 +4,6 @@ import android.app.Application;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
 import com.abada.nstnote.Note;
 
@@ -57,6 +56,7 @@ public class IOManager {
             return null;
         });
         for (Note note : notes) {
+            if (note == null) continue;
             Objects.requireNonNull(this.notes.getValue()).remove(note);
             if (note.isChecked())
                 note.check();
@@ -70,13 +70,7 @@ public class IOManager {
         });
     }
 
-    public void getNoteById(MutableLiveData<Note> note, long id) {
-        if (id == 0)
-            note.setValue(new Note());
-        else
-            room.submit(() -> {
-                note.postValue(dao.getNoteById(id));
-                return id;
-            });
+    public LiveData<Note> getNoteById(long id) {
+        return dao.getNoteById(id);
     }
 }

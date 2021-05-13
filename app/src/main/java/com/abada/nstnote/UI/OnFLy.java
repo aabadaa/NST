@@ -31,6 +31,7 @@ public abstract class OnFLy extends FrameLayout {
     private final Application application;
     //Models
     SingleNoteViewModel viewModel;
+    Note cur;
     private String toastText;
 
     public OnFLy(Application application) {
@@ -45,16 +46,17 @@ public abstract class OnFLy extends FrameLayout {
         cancel.setOnClickListener(v1 -> cancel());
         showHideKeyboard();
         viewModel = new AndroidViewModelFactory(application).create(SingleNoteViewModel.class);
-        viewModel.getNoteLiveData().observeForever(note -> {
-            body.setText(note.body);
-            body.setSelection(body.length());
-        });
         try {
-            viewModel.getNote(lastNoteId != null ? lastNoteId.get().get(0) : 0);
+            viewModel.getNote(lastNoteId != null ? lastNoteId.get().get(0) : 0)
+                    .observeForever(note -> {
+                        if (note != null) {
+                            body.setText(note.body);
+                            cur = note;
+                        }
+                    });
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -79,17 +81,17 @@ public abstract class OnFLy extends FrameLayout {
     }
 
     private void save(boolean doPop) {
-        assert viewModel.getNoteLiveData().getValue() != null;
         toastText = "Saved";
         String body = this.body.getText().toString();
         Note newNote = new Note(body);
-        newNote.id = viewModel.getNoteLiveData().getValue().id;
-
-        viewModel.getNoteLiveData().setValue(newNote);
+        if (cur != null) {
+            newNote.id = cur.id;
+            newNote.date = cur.date;
+        }
         if (newNote.body.isEmpty()) {
             cancel();
         } else {
-            Future<List<Long>> id = viewModel.edit(State.INSERT);
+            Future<List<Long>> id = viewModel.edit(newNote, State.INSERT);
             if (doPop) {
                 lastNoteId = null;
             } else {
@@ -109,7 +111,7 @@ public abstract class OnFLy extends FrameLayout {
 
     private void cancel() {
         toastText = "Canceled";
-        viewModel.edit(State.DELETE);
+        viewModel.edit(cur, State.DELETE);
         lastNoteId = null;
         doClose();
     }

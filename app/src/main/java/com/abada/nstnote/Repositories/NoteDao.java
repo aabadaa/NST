@@ -23,7 +23,7 @@ public abstract class NoteDao {
     public abstract void delete(Note... note);
 
     @Query("select*from Note where id=:id")
-    public abstract Note getNoteById(long id);
+    public abstract LiveData<Note> getNoteById(long id);
 
     @Query("delete from Note")
     public abstract void deleteAll();

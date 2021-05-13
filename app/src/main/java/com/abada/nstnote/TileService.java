@@ -23,10 +23,10 @@ public class TileService extends android.service.quicksettings.TileService {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         try {
             wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -81,7 +81,7 @@ public class TileService extends android.service.quicksettings.TileService {
         try {
             wm.addView(o, params);
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 }

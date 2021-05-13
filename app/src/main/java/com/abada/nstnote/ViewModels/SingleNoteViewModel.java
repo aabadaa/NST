@@ -1,10 +1,9 @@
 package com.abada.nstnote.ViewModels;
 
 import android.app.Application;
-import android.util.Log;
 
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.LiveData;
 
 import com.abada.nstnote.Note;
 import com.abada.nstnote.Repositories.IOManager;
@@ -14,27 +13,19 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public class SingleNoteViewModel extends AndroidViewModel {
-    private final MutableLiveData<Note> note;
     private final IOManager iom;
 
     public SingleNoteViewModel(Application application) {
         super(application);
         iom = IOManager.getInstance(application);
-        note = new MutableLiveData<>();
     }
 
-    public MutableLiveData<Note> getNoteLiveData() {
-        return note;
-    }
-
-    public Future<List<Long>> edit(State choice) {
-        assert note.getValue() != null;
+    public Future<List<Long>> edit(Note note, State choice) {
         switch (choice) {
             case INSERT:
-                return iom.insert(note.getValue());
+                return iom.insert(note);
             case DELETE:
-                Log.i("TAG", "edit: " + note.getValue().id);
-                iom.delete(note.getValue());
+                iom.delete(note);
                 break;
             default:
                 throw new RuntimeException("Wrong choice");
@@ -42,7 +33,7 @@ public class SingleNoteViewModel extends AndroidViewModel {
         return null;
     }
 
-    public void getNote(long id) {
-        iom.getNoteById(note, id);
+    public LiveData<Note> getNote(long id) {
+        return iom.getNoteById(id);
     }
 }
