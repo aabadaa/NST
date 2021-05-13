@@ -34,11 +34,11 @@ public abstract class OnFLy extends FrameLayout {
     Note cur;
     private String toastText;
 
-    public OnFLy(Application application) {
+    public OnFLy(LayoutInflater inflater, Application application) {
         super(application);
         this.application = application;
         application.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
-        View v = LayoutInflater.from(application).inflate(R.layout.popup_layout, this);
+        View v = inflater.inflate(R.layout.popup_layout, this);
         Button save = v.findViewById(R.id.save);
         save.setOnClickListener(v1 -> save(true));
         body = v.findViewById(R.id.note);
