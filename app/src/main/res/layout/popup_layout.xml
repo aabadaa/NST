@@ -24,7 +24,7 @@
         tools:ignore="MissingConstraints" />
 
     <EditText
-        android:id="@+id/note"
+        android:id="@+id/body"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="40"
@@ -47,7 +47,7 @@
         android:textColor="@color/fontColor"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/note"
+        app:layout_constraintTop_toBottomOf="@+id/body"
         app:layout_constraintVertical_bias="0.0" />
 
 

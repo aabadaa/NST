@@ -10,10 +10,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.abada.nstnote.Note;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @Database(entities = Note.class, version = 6, exportSchema = false)
 public abstract class MyRoom extends RoomDatabase {
@@ -84,8 +82,8 @@ public abstract class MyRoom extends RoomDatabase {
 
     public abstract NoteDao getDao();
 
-    public Future<?> submit(Callable<?> callable) {
-        return executor.submit(callable);
+    public void execute(Runnable runnable) {
+        executor.execute(runnable);
     }
 
 }

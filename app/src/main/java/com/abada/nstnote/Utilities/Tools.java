@@ -12,14 +12,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.lifecycle.MutableLiveData;
 
 import com.abada.nstnote.Note;
 import com.abada.nstnote.R;
+import com.abada.nstnote.databinding.PopupLayoutBinding;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -33,10 +32,11 @@ public class Tools {
     private static Tools ins;
     private final Context context;
     private final MutableLiveData<Integer> counter;
-
+    private final SharedPreferences pref;
     private Tools(Context context) {
         this.context = context;
         counter = new MutableLiveData<>();
+        pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
     }
 
     public static void createIns(Context context) {
@@ -60,24 +60,22 @@ public class Tools {
     @SuppressLint("SetTextI18n")
     public void askDialog(View.OnClickListener yes, View.OnClickListener no) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        View v = LayoutInflater.from(context).inflate(R.layout.popup_layout, null);
-        EditText text = v.findViewById(R.id.note);
-        Button yesButton = v.findViewById(R.id.save);
-        Button noButton = v.findViewById(R.id.cancel);
-        text.setEnabled(false);
-        text.setText("Are you sure?");
-        text.setTextColor(context.getResources().getColor(R.color.fontColor, null));
-        yesButton.setText("Yes");
-        noButton.setText("No");
+        LayoutInflater inflater = LayoutInflater.from(context);
+        PopupLayoutBinding binding = PopupLayoutBinding.inflate(inflater, null, false);
+        binding.body.setEnabled(false);
+        binding.body.setText("Are you sure?");
+        binding.body.setTextColor(context.getResources().getColor(R.color.fontColor, null));
+        binding.save.setText("Yes");
+        binding.cancel.setText("No");
 
-        builder.setView(v);
+        builder.setView(binding.getRoot());
         Dialog d = builder.create();
-        yesButton.setOnClickListener(v1 -> {
+        binding.save.setOnClickListener(v1 -> {
             if (yes != null)
                 yes.onClick(v1);
             d.dismiss();
         });
-        noButton.setOnClickListener(v1 -> {
+        binding.cancel.setOnClickListener(v1 -> {
             if (no != null)
                 no.onClick(v1);
             d.dismiss();
@@ -98,7 +96,6 @@ public class Tools {
 
     public void checkOne(boolean isChecked) {
         String c = "counter";
-        SharedPreferences pref = context.getSharedPreferences(c, Context.MODE_PRIVATE);
         int newValue = pref.getInt(c, 0) + (isChecked ? 1 : -1);
         Log.i(TAG, "checkOne: " + newValue);
         @SuppressLint("CommitPrefEdits")
@@ -107,5 +104,23 @@ public class Tools {
         edit.putInt(c, newValue);
         edit.apply();
         Log.i(TAG, "checkOne: after edit " + pref.getInt(c, 0));
+    }
+
+    public void keepNote(Long id) {
+        @SuppressLint("CommitPrefEdits") SharedPreferences.Editor edit = pref.edit();
+        edit.putString("kept", id.toString());
+        edit.apply();
+    }
+
+    public Long getNoteId() {
+        String out = pref.getString("kept", "0");
+        keepNote(0L);
+        if (out == null)
+            return 0L;
+        return Long.parseLong(out);
+    }
+
+    public boolean isKept() {
+        return !pref.getString("kept", "0").equals("0");
     }
 }

@@ -1,23 +1,18 @@
 package com.abada.nstnote;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Icon;
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.abada.nstnote.UI.Activities.OnFLyActivity;
 import com.abada.nstnote.UI.OnFLy;
-
-import java.util.List;
-import java.util.concurrent.Future;
+import com.abada.nstnote.Utilities.Tools;
 
 public class TileService extends android.service.quicksettings.TileService {
-    public static Future<List<Long>> lastNoteId;
     public static boolean showed = false;
     private WindowManager wm;
 
@@ -33,13 +28,12 @@ public class TileService extends android.service.quicksettings.TileService {
     @Override
     public void onClick() {
         showed = true;
-        Log.i("TAG", "onClick: " + lastNoteId);
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "You should give me the permission", Toast.LENGTH_SHORT).show();
             return;
         }
         if (isLocked())
-            startActivity(new Intent(this, OnFLyActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            unlockAndRun(this::showOnFLyNote);
         else
             showOnFLyNote();
     }
@@ -50,7 +44,7 @@ public class TileService extends android.service.quicksettings.TileService {
         tile.setIcon(Icon.createWithResource(this,
                 R.drawable.tile_ic));
         tile.setLabel(getString(R.string.tile_label));
-        tile.setState(lastNoteId != null && Settings.canDrawOverlays(this) ?
+        tile.setState(Tools.getIns().isKept() && Settings.canDrawOverlays(this) ?
                 Tile.STATE_ACTIVE
                 : Tile.STATE_INACTIVE);
         if (showed)
@@ -71,7 +65,8 @@ public class TileService extends android.service.quicksettings.TileService {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN |
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.RGBA_8888);
         params.windowAnimations = android.R.style.Animation_Translucent;
-        OnFLy o = new OnFLy(getApplication()) {
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        OnFLy o = new OnFLy(inflater, getApplication()) {
             @Override
             public void close() {
                 wm.removeView(this);

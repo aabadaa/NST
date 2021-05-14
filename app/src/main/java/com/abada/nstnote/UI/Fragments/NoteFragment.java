@@ -5,7 +5,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,43 +12,36 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.abada.nstnote.Note;
-import com.abada.nstnote.R;
 import com.abada.nstnote.Utilities.State;
-import com.abada.nstnote.ViewModels.SingleNoteViewModel;
+import com.abada.nstnote.ViewModels.NotesViewModel;
+import com.abada.nstnote.databinding.FragmentNoteBinding;
 
 public class NoteFragment extends Fragment {
     final String TAG = this.getClass().getName();
-    //views
-    View v;
-    EditText header, body;
+    FragmentNoteBinding binding;
     //others
     Note cur;
     long id = 0;
-    SingleNoteViewModel viewModel;
+    NotesViewModel viewModel;
     NoteFragmentArgs args;
-
-    public NoteFragment() {
-        super(R.layout.fragment_note);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         Log.i(TAG, "onCreate: ");
-        return v = super.onCreateView(inflater, parent, savedInstanceState);
+        binding = FragmentNoteBinding.inflate(inflater, parent, true);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        header = view.findViewById(R.id.note_header);
-        body = view.findViewById(R.id.note_text);
-        viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()).create(SingleNoteViewModel.class);
+        viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()).create(NotesViewModel.class);
         args = NoteFragmentArgs.fromBundle(requireArguments());
         id = args.getId();
         if (id != 0) {
-            viewModel.getNote(id).observe(getViewLifecycleOwner(), note -> {
+            viewModel.getNoteById(id).observe(getViewLifecycleOwner(), note -> {
                 cur = note;
-                header.setText(note.header);
-                body.setText(note.body);
+                binding.noteHeader.setText(note.header);
+                binding.noteBody.setText(note.body);
             });
         }
     }
@@ -57,7 +49,7 @@ public class NoteFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        Note newNote = new Note(header.getText().toString(), body.getText().toString());
+        Note newNote = new Note(binding.noteHeader.getText().toString(), binding.noteBody.getText().toString());
         if (cur != null) {
             newNote.id = cur.id;
             newNote.date = cur.date;
@@ -72,8 +64,8 @@ public class NoteFragment extends Fragment {
 
     void save() {
         Note newNote = new Note(cur);
-        newNote.body = this.body.getText().toString();
-        newNote.header = this.header.getText().toString();
+        newNote.body = binding.noteBody.getText().toString();
+        newNote.header = binding.noteHeader.getText().toString();
         viewModel.edit(newNote, newNote.isEmpty() ? State.DELETE : State.INSERT);
     }
 }

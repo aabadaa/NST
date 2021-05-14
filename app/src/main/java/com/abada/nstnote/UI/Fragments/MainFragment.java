@@ -15,8 +15,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.abada.nstnote.Events.FABOnLongClickListener;
 import com.abada.nstnote.Events.FABScrollListener;
@@ -27,51 +25,37 @@ import com.abada.nstnote.Repositories.IOManager;
 import com.abada.nstnote.Utilities.BackupManager;
 import com.abada.nstnote.Utilities.Tools;
 import com.abada.nstnote.ViewModels.NotesViewModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.abada.nstnote.databinding.FragmentMainBinding;
 
 public class MainFragment extends Fragment {
     public final String TAG = this.getClass().getName();
-    //Views
-    View view;
-    RecyclerView recyclerView;
-    FloatingActionButton button;
-    SwipeRefreshLayout swipeRefreshLayout;
+    private FragmentMainBinding binding;
     //Others
     NotesViewModel viewModel;
     NoteAdapter noteAdapter;
     BackupManager b;
-    public MainFragment() {
-        super(R.layout.fragment_main);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         Log.i(TAG, "onCreate: ");
-        view = super.onCreateView(inflater, parent, savedInstanceState);
+        binding = FragmentMainBinding.inflate(inflater, parent, false);
         setHasOptionsMenu(true);
-        return view;
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication())
                 .create(NotesViewModel.class);
-        button = view.findViewById(R.id.new_note_button);
-        button.setOnClickListener(getAddListener());
+        binding.FAB.setOnClickListener(getAddListener());
 
-        recyclerView = view.findViewById(R.id.rv);
-        noteAdapter = new NoteAdapter(getActivity(), viewModel.getNotes(), getItemClickListener());
-        recyclerView.setAdapter(noteAdapter);
-        recyclerView.addOnScrollListener(new FABScrollListener(button));
-        NoteSimpleCallback.setNoteCallback(viewModel, recyclerView);
-
-        swipeRefreshLayout = view.findViewById(R.id.refresh);
-        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.update());
-
-        viewModel.getNotes().observe(requireActivity(), notes -> {
-            noteAdapter.setList();
-            swipeRefreshLayout.setRefreshing(false);
-        });
+        noteAdapter = new NoteAdapter(getActivity(), viewModel.getNotes(""), getItemClickListener());
+        viewModel.setNoteAdapter(noteAdapter);
+        binding.rv.setAdapter(noteAdapter);
+        binding.rv.addOnScrollListener(new FABScrollListener(binding.FAB));
+        NoteSimpleCallback.setNoteCallback(viewModel, binding.rv);
+        binding.refresh.setOnRefreshListener(this::update);
+        update();
         b = new BackupManager(requireContext(), IOManager.getInstance(getActivity().getApplication()));
         Tools.createIns(getContext());
         Tools.getIns().getCounter().observe(requireActivity(), i -> {
@@ -110,24 +94,24 @@ public class MainFragment extends Fragment {
     }
 
     public void enableSelect(boolean enable) {
-        button.hide();
+        binding.FAB.hide();
         if (enable) {
-            button.setOnClickListener(getDeleteListener());
-            button.setImageDrawable(getResources().getDrawable(R.drawable.delete_ic, null));
-            button.setOnLongClickListener(new FABOnLongClickListener(getContext(), getSelectAllListener(), getDeleteListener()));
-            button.setTag(true);
+            binding.FAB.setOnClickListener(getDeleteListener());
+            binding.FAB.setImageDrawable(getResources().getDrawable(R.drawable.delete_ic, null));
+            binding.FAB.setOnLongClickListener(new FABOnLongClickListener(getContext(), getSelectAllListener(), getDeleteListener()));
+            binding.FAB.setTag(true);
         } else {
-            button.setOnClickListener(getAddListener());
-            button.setImageDrawable(getResources().getDrawable(R.drawable.add_ic, null));
-            button.setOnLongClickListener(null);
-            button.setTag(null);
+            binding.FAB.setOnClickListener(getAddListener());
+            binding.FAB.setImageDrawable(getResources().getDrawable(R.drawable.add_ic, null));
+            binding.FAB.setOnLongClickListener(null);
+            binding.FAB.setTag(null);
         }
-        button.show();
+        binding.FAB.show();
     }
 
     private void toNoteFragment(long id) {
         NavDirections action = MainFragmentDirections.mainToNote().setId(id);
-        Navigation.findNavController(view).navigate(action);
+        Navigation.findNavController(binding.getRoot()).navigate(action);
     }
 
     //listeners
@@ -136,7 +120,7 @@ public class MainFragment extends Fragment {
     }
 
     private View.OnClickListener getDeleteListener() {
-        return v -> Tools.getIns().askDialog(v1 -> viewModel.deleteSelected(noteAdapter), null);
+        return v -> Tools.getIns().askDialog(v1 -> viewModel.deleteChecked(), null);
     }
 
     private View.OnClickListener getSelectAllListener() {
@@ -145,9 +129,16 @@ public class MainFragment extends Fragment {
 
     private View.OnClickListener getItemClickListener() {
         return v1 -> {
-            int pos = recyclerView.getChildLayoutPosition(v1);
+            int pos = binding.rv.getChildLayoutPosition(v1);
             long id = noteAdapter.getItem(pos).id;
             toNoteFragment(id);
         };
+    }
+
+    private void update() {
+        viewModel.getNotes("").observe(requireActivity(), notes -> {
+            noteAdapter.setList(notes);
+            binding.refresh.setRefreshing(false);
+        });
     }
 }

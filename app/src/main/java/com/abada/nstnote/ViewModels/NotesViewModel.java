@@ -1,7 +1,6 @@
 package com.abada.nstnote.ViewModels;
 
 import android.app.Application;
-import android.util.Log;
 import android.widget.Filter;
 import android.widget.Filterable;
 
@@ -12,56 +11,61 @@ import com.abada.nstnote.Note;
 import com.abada.nstnote.NoteAdapter;
 import com.abada.nstnote.Repositories.IOManager;
 import com.abada.nstnote.Utilities.NotesFilter;
-import com.abada.nstnote.Utilities.Tools;
+import com.abada.nstnote.Utilities.State;
 
 import java.util.List;
 
 public class NotesViewModel extends AndroidViewModel implements Filterable {
     private final String TAG = getClass().getName();
-    private final LiveData<List<Note>> notes;
     private final IOManager iom;
-    private final Filter filter;
+    private Filter filter;
 
 
     public NotesViewModel(Application application) {
         super(application);
         iom = IOManager.getInstance(application);
-        notes = iom.getNotes();
-        filter = new NotesFilter(iom);
     }
 
-    public void deleteSelected(NoteAdapter noteAdapter) {
-        final List<Note> selectedNotes = noteAdapter.deleteSelected();
-        Note[] temp = new Note[selectedNotes.size()];
-        selectedNotes.toArray(temp);
-        iom.delete(temp);
+    public void deleteChecked() {
+        iom.deleteChecked();
     }
 
-    public void update() {
-        Log.i(TAG, "update: ");
-        iom.getAll("");
-    }
-
-    public LiveData<List<Note>> getNotes() {
-        return notes;
+    public LiveData<List<Note>> getNotes(String query) {
+        return iom.getNotes(query);
     }
 
     public void checkAt(int index) {
-        iom.check(notes.getValue().get(index));
+        iom.checkAt(index);
     }
 
     public void checkALL() {
-        Integer x = Tools.getIns().getCounter().getValue();
-        List<Note> showedNotes = notes.getValue();
-        assert showedNotes != null;
-        boolean allIsChecked = x == showedNotes.size();
-        for (int i = 0; i < showedNotes.size(); i++)
-            if (!showedNotes.get(i).isChecked() ^ allIsChecked)
-                checkAt(i);
+        iom.checkAll();
+    }
+
+    public LiveData<List<Long>> edit(Note note, State choice) {
+        switch (choice) {
+            case INSERT:
+                return iom.insert(note);
+            case DELETE:
+                iom.delete(note);
+                break;
+            default:
+                throw new RuntimeException("Wrong choice");
+        }
+        return null;
+    }
+
+    public LiveData<Note> getNoteById(long id) {
+        return iom.getNoteById(id);
+    }
+
+    public void setNoteAdapter(NoteAdapter noteAdapter) {
+        filter = new NotesFilter(iom, noteAdapter);
     }
 
     @Override
     public Filter getFilter() {
         return filter;
     }
+
 }

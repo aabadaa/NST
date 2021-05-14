@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -13,20 +12,18 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.abada.nstnote.Utilities.NoteDiffUtil;
+import com.abada.nstnote.databinding.ListItemBinding;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     private final View.OnClickListener itemClickListener;
     private final Context context;
     private List<Note> showedNotes;
-    private final LiveData<List<Note>> notesLiveData;
 
     public NoteAdapter(Context context, LiveData<List<Note>> notes,
                        View.OnClickListener itemClickListener) {
         this.context = context;
-        this.notesLiveData = notes;
         this.showedNotes = notes.getValue();
         this.itemClickListener = itemClickListener;
     }
@@ -35,26 +32,15 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     @Override
     public NoteHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-        View v = layoutInflater.inflate(R.layout.list_item, parent, false);
-        v.setOnClickListener(itemClickListener);
-        return new NoteHolder(v);
+        ListItemBinding binding = ListItemBinding.inflate(layoutInflater, parent, false);
+        binding.getRoot().setOnClickListener(itemClickListener);
+        return new NoteHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NoteHolder holder, int position) {
         Note note = showedNotes.get(position);
-        TextView header = holder.header;
-        TextView date = holder.date;
-        header.setText(note.header == null || note.header.isEmpty() ? note.body : note.header);
-        date.setText(note.date);
-        holder.id = note.id;
-        Drawable background;
-        if (note.isChecked())
-            background = context.getDrawable(R.drawable.item_background_checked);
-        else
-            background = context.getDrawable(R.drawable.item_background_unchecked);
-        holder.itemView.setTag(note.isChecked());
-        holder.itemView.setBackground(background);
+        holder.bind(note, context);
     }
 
     @Override
@@ -66,20 +52,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         return context;
     }
 
-    public void remove(Note... notes) {
-        try {
-            for (Note note : notes) {
-                int position = showedNotes.indexOf(note);
-                showedNotes.remove(position);
-                notifyItemRemoved(position);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setList() {
-        List<Note> notes = notesLiveData.getValue();
+    public void setList(List<Note> notes) {
         NoteDiffUtil noteDiffUtil = new NoteDiffUtil(showedNotes, notes);
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(noteDiffUtil);
         this.showedNotes = notes;
@@ -90,28 +63,26 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         return showedNotes.get(position);
     }
 
-
-    public List<Note> deleteSelected() {
-        List<Note> selected = new LinkedList<>();
-        for (Note note : showedNotes) {
-            if (note.isChecked()) {
-                selected.add(note);
-            }
-        }
-        Note[] notes = new Note[selected.size()];
-        selected.toArray(notes);
-        remove(notes);
-        return selected;
-    }
-
     public static class NoteHolder extends RecyclerView.ViewHolder {
-        public TextView header, date;
         long id;
+        private final ListItemBinding binding;
 
-        public NoteHolder(View v) {
-            super(v);
-            header = v.findViewById(R.id.list_item_header);
-            date = v.findViewById(R.id.list_item_date);
+        public NoteHolder(ListItemBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
+        }
+
+        public void bind(Note note, Context context) {
+            binding.listItemHeader.setText(note.header == null || note.header.isEmpty() ? note.body : note.header);
+            binding.listItemDate.setText(note.date);
+            id = note.id;
+            Drawable background;
+            if (note.isChecked())
+                background = context.getDrawable(R.drawable.item_background_checked);
+            else
+                background = context.getDrawable(R.drawable.item_background_unchecked);
+            itemView.setTag(note.isChecked());
+            itemView.setBackground(background);
         }
     }
 }

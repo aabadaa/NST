@@ -40,8 +40,8 @@ public class BackupManager {
             Log.i(TAG, "backUp: " + f.getAbsoluteFile());
             String fileName = f.getPath() + File.separator + Tools.getIns().getCurrentDate() + ".nsb";
             ObjectOutputStream backupStream = new ObjectOutputStream(new FileOutputStream(fileName));
-            Log.i(TAG, "backUp: " + iom.getNotes().getValue());
-            backupStream.writeObject(iom.getNotes().getValue());
+            //todo need to observe
+            backupStream.writeObject(iom.getNotes("").getValue());
             backupStream.close();
             Toast.makeText(context, "Backup is done", Toast.LENGTH_LONG).show();
         } catch (Exception e) {

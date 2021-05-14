@@ -11,17 +11,17 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.abada.nstnote.R;
+import com.abada.nstnote.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
     public final String TAG = this.getClass().getName();
-    public MainActivity() {
-        super(R.layout.activity_main);
-    }
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        binding = ActivityMainBinding.inflate(getLayoutInflater(), null, false);
+        setContentView(binding.getRoot());
         storagePermissionGranted();
     }
 

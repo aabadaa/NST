@@ -4,24 +4,27 @@ import android.app.Application;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.abada.nstnote.Note;
+import com.abada.nstnote.Utilities.Tools;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Future;
 
 public class IOManager {
     public final String TAG = this.getClass().getName();
     private static IOManager instance;
     private final MyRoom room;
     private final NoteDao dao;
-    private String query = "";
+    public final MutableLiveData<List<Long>> insertedIds;
     private LiveData<List<Note>> notes;
 
     private IOManager(Application application) {
         room = MyRoom.getInstance(application);
         dao = room.getDao();
+        insertedIds = new MutableLiveData<>();
     }
 
     public static IOManager getInstance(Application application) {
@@ -30,31 +33,37 @@ public class IOManager {
         return instance;
     }
 
-    public void getAll(String query) {
-        this.query = query;
-        notes = dao.getAll(query);
+    public LiveData<List<Note>> getNotes(String query) {
+        return notes = dao.getAll(query);
     }
 
-    public LiveData<List<Note>> getNotes() {
-        notes = dao.getAll(query);
-        return notes;
-    }
-
-    public Future<List<Long>> insert(Note... notes) {
+    public LiveData<List<Long>> insert(Note... notes) {
         Log.i(TAG, "insert: ");
-        return (Future<List<Long>>) room.submit(() -> dao.insert(notes));
+        room.execute(() -> insertedIds.postValue(dao.insert(notes)));
+        return insertedIds;
     }
 
-    public void check(Note note) {
+    private void check(Note note) {
         note.check();
-        room.submit(() -> dao.insert(note));
+        insert(note);
+    }
+
+    public void checkAll() {
+        Integer x = Tools.getIns().getCounter().getValue();
+        List<Note> showedNotes = notes.getValue();
+        assert showedNotes != null;
+        boolean allIsChecked = x == showedNotes.size();
+        for (int i = 0; i < showedNotes.size(); i++)
+            if (!showedNotes.get(i).isChecked() ^ allIsChecked)
+                checkAt(i);
+    }
+
+    public void checkAt(int index) {
+        check(notes.getValue().get(index));
     }
 
     public void delete(Note... notes) {
-        room.submit(() -> {
-            dao.delete(notes);
-            return null;
-        });
+        room.execute(() -> dao.delete(notes));
         for (Note note : notes) {
             if (note == null) continue;
             Objects.requireNonNull(this.notes.getValue()).remove(note);
@@ -63,11 +72,18 @@ public class IOManager {
         }
     }
 
+    public void deleteChecked() {
+        List<Note> selected = new LinkedList<>();
+        for (Note note : notes.getValue())
+            if (note.isChecked())
+                selected.add(note);
+        Note[] notes = new Note[selected.size()];
+        selected.toArray(notes);
+        delete(notes);
+    }
+
     public void deleteAll() {
-        room.submit(() -> {
-            dao.deleteAll();
-            return 0L;
-        });
+        room.execute(dao::deleteAll);
     }
 
     public LiveData<Note> getNoteById(long id) {

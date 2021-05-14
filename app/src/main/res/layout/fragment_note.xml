@@ -9,7 +9,7 @@
     tools:context=".UI.Fragments.NoteFragment">
 
     <EditText
-        android:id="@+id/note_text"
+        android:id="@+id/note_body"
         android:layout_width="401dp"
         android:layout_height="653dp"
         android:background="@color/background"
