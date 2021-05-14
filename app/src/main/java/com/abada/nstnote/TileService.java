@@ -18,6 +18,8 @@ public class TileService extends android.service.quicksettings.TileService {
 
     @Override
     public void onCreate() {
+        if (Tools.getIns() == null)
+            Tools.createIns(this);
         try {
             wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         } catch (Exception e) {
