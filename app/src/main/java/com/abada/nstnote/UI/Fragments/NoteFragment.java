@@ -1,10 +1,7 @@
 package com.abada.nstnote.UI.Fragments;
 
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.abada.nstnote.Note;
+import com.abada.nstnote.R;
 import com.abada.nstnote.Utilities.State;
 import com.abada.nstnote.ViewModels.NotesViewModel;
 import com.abada.nstnote.databinding.FragmentNoteBinding;
@@ -21,22 +19,24 @@ public class NoteFragment extends Fragment {
     FragmentNoteBinding binding;
     //others
     Note cur;
-    long id = 0;
     NotesViewModel viewModel;
-    NoteFragmentArgs args;
 
-    @Override
+    public NoteFragment() {
+        super(R.layout.fragment_note);
+    }
+   /* @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         Log.i(TAG, "onCreate: ");
-        binding = FragmentNoteBinding.inflate(inflater, parent, true);
+        binding = FragmentNoteBinding.inflate(inflater, parent, false);
         return binding.getRoot();
-    }
+    }*/
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        binding = FragmentNoteBinding.bind(view);
         viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()).create(NotesViewModel.class);
-        args = NoteFragmentArgs.fromBundle(requireArguments());
-        id = args.getId();
+        NoteFragmentArgs args = NoteFragmentArgs.fromBundle(requireArguments());
+        Long id = args.getId();
         if (id != 0) {
             viewModel.getNoteById(id).observe(getViewLifecycleOwner(), note -> {
                 cur = note;
@@ -63,9 +63,10 @@ public class NoteFragment extends Fragment {
     }
 
     void save() {
-        Note newNote = new Note(cur);
-        newNote.body = binding.noteBody.getText().toString();
-        newNote.header = binding.noteHeader.getText().toString();
-        viewModel.edit(newNote, newNote.isEmpty() ? State.DELETE : State.INSERT);
+        if (cur == null)
+            cur = new Note("");
+        cur.body = binding.noteBody.getText().toString();
+        cur.header = binding.noteHeader.getText().toString();
+        viewModel.edit(cur, cur.isEmpty() ? State.DELETE : State.INSERT);
     }
 }

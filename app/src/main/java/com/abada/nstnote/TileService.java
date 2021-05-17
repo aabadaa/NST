@@ -18,8 +18,7 @@ public class TileService extends android.service.quicksettings.TileService {
 
     @Override
     public void onCreate() {
-        if (Tools.getIns() == null)
-            Tools.createIns(this);
+        Tools.setContext(this);
         try {
             wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         } catch (Exception e) {
@@ -46,7 +45,7 @@ public class TileService extends android.service.quicksettings.TileService {
         tile.setIcon(Icon.createWithResource(this,
                 R.drawable.tile_ic));
         tile.setLabel(getString(R.string.tile_label));
-        tile.setState(Tools.getIns().isKept() && Settings.canDrawOverlays(this) ?
+        tile.setState(Tools.isKept() && Settings.canDrawOverlays(this) ?
                 Tile.STATE_ACTIVE
                 : Tile.STATE_INACTIVE);
         if (showed)

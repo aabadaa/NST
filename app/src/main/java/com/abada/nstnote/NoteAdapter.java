@@ -7,24 +7,28 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.abada.nstnote.Utilities.NoteDiffUtil;
 import com.abada.nstnote.databinding.ListItemBinding;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     private final View.OnClickListener itemClickListener;
     private final Context context;
     private List<Note> showedNotes;
+    private final MutableLiveData<String> query;
+    private List<Note> allNotes;
 
-    public NoteAdapter(Context context, LiveData<List<Note>> notes,
+    public NoteAdapter(Context context,
+                       MutableLiveData<String> query,
                        View.OnClickListener itemClickListener) {
         this.context = context;
-        this.showedNotes = notes.getValue();
+        this.query = query;
         this.itemClickListener = itemClickListener;
     }
 
@@ -48,23 +52,26 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         return showedNotes == null ? 0 : showedNotes.size();
     }
 
-    public Context getContext() {
-        return context;
+    public void setList(List<Note> notes) {
+        allNotes = notes;
+        showList();
     }
 
-    public void setList(List<Note> notes) {
-        NoteDiffUtil noteDiffUtil = new NoteDiffUtil(showedNotes, notes);
+    private void showList() {
+        List<Note> temp = new ArrayList<>(allNotes);
+        temp.removeIf(note -> !note.contains(query.getValue()));
+        NoteDiffUtil noteDiffUtil = new NoteDiffUtil(showedNotes, temp);
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(noteDiffUtil);
-        this.showedNotes = notes;
+        showedNotes = temp;
         diffResult.dispatchUpdatesTo(this);
     }
 
-    public Note getItem(int position) {
+    public Note getItemByIndex(int position) {
         return showedNotes.get(position);
     }
 
     public static class NoteHolder extends RecyclerView.ViewHolder {
-        long id;
+        public Note note;
         private final ListItemBinding binding;
 
         public NoteHolder(ListItemBinding binding) {
@@ -75,7 +82,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         public void bind(Note note, Context context) {
             binding.listItemHeader.setText(note.header == null || note.header.isEmpty() ? note.body : note.header);
             binding.listItemDate.setText(note.date);
-            id = note.id;
+            this.note = note;
             Drawable background;
             if (note.isChecked())
                 background = context.getDrawable(R.drawable.item_background_checked);

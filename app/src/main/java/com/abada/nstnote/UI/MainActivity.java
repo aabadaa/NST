@@ -1,4 +1,4 @@
-package com.abada.nstnote.UI.Activities;
+package com.abada.nstnote.UI;
 
 import android.Manifest;
 import android.content.Intent;

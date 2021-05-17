@@ -13,7 +13,7 @@ import com.abada.nstnote.Note;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = Note.class, version = 6, exportSchema = false)
+@Database(entities = Note.class, version = 7, exportSchema = false)
 public abstract class MyRoom extends RoomDatabase {
     private static MyRoom instance;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -63,6 +63,15 @@ public abstract class MyRoom extends RoomDatabase {
 
         }
     };
+    private static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("create table note2(id INTEGER primary key ,header TEXT, body TEXT,date TEXT)");
+            database.execSQL("insert into note2(id,header,body,date) select id,header,body,date from Note");
+            database.execSQL("drop table Note");
+            database.execSQL("alter table note2 rename to Note");
+        }
+    };
 
     public static MyRoom getInstance(Application application) {
         if (instance == null) {
@@ -74,6 +83,7 @@ public abstract class MyRoom extends RoomDatabase {
                             .addMigrations(MIGRATION_3_4)
                             .addMigrations(MIGRATION_4_5)
                             .addMigrations(MIGRATION_5_6)
+                            .addMigrations(MIGRATION_6_7)
                             .build();
             }
         }

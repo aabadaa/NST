@@ -49,16 +49,15 @@ public class MainFragment extends Fragment {
                 .create(NotesViewModel.class);
         binding.FAB.setOnClickListener(getAddListener());
 
-        noteAdapter = new NoteAdapter(getActivity(), viewModel.getNotes(""), getItemClickListener());
-        viewModel.setNoteAdapter(noteAdapter);
+        noteAdapter = new NoteAdapter(getActivity(), viewModel.getFilterQuery(), getItemClickListener());
         binding.rv.setAdapter(noteAdapter);
         binding.rv.addOnScrollListener(new FABScrollListener(binding.FAB));
         NoteSimpleCallback.setNoteCallback(viewModel, binding.rv);
         binding.refresh.setOnRefreshListener(this::update);
         update();
         b = new BackupManager(requireContext(), IOManager.getInstance(getActivity().getApplication()));
-        Tools.createIns(getContext());
-        Tools.getIns().getCounter().observe(requireActivity(), i -> {
+        Tools.setContext(getContext());
+        Tools.getCounter().observe(requireActivity(), i -> {
             enableSelect(i > 0);
             Log.i(TAG, "onViewCreated: " + i);
         });
@@ -77,7 +76,7 @@ public class MainFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                viewModel.getFilter().filter(newText);
+                viewModel.getFilterQuery().setValue(newText);
                 return true;
             }
         });
@@ -120,7 +119,7 @@ public class MainFragment extends Fragment {
     }
 
     private View.OnClickListener getDeleteListener() {
-        return v -> Tools.getIns().askDialog(v1 -> viewModel.deleteChecked(), null);
+        return v -> Tools.askDialog(requireContext(), v1 -> viewModel.deleteChecked(), null);
     }
 
     private View.OnClickListener getSelectAllListener() {
@@ -130,15 +129,16 @@ public class MainFragment extends Fragment {
     private View.OnClickListener getItemClickListener() {
         return v1 -> {
             int pos = binding.rv.getChildLayoutPosition(v1);
-            long id = noteAdapter.getItem(pos).id;
+            long id = noteAdapter.getItemByIndex(pos).id;
             toNoteFragment(id);
         };
     }
 
     private void update() {
-        viewModel.getNotes("").observe(requireActivity(), notes -> {
+        viewModel.observe(notes -> {
             noteAdapter.setList(notes);
             binding.refresh.setRefreshing(false);
+            viewModel.getFilterQuery().setValue(viewModel.getFilterQuery().getValue());
         });
     }
 }

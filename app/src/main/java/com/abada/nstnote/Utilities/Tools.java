@@ -23,32 +23,27 @@ import com.abada.nstnote.databinding.PopupLayoutBinding;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import static android.content.ContentValues.TAG;
 
 public class Tools {
+    private final static MutableLiveData<Integer> counter = new MutableLiveData<>(0);
+    private final static Map<Long, Boolean> isChecked = new HashMap<>();
     @SuppressLint("StaticFieldLeak")
-    private static Tools ins;
-    private final Context context;
-    private final MutableLiveData<Integer> counter;
-    private final SharedPreferences pref;
-    private Tools(Context context) {
-        this.context = context;
-        counter = new MutableLiveData<>();
+    private static Context context;
+    private static SharedPreferences pref;
+
+    public static void setContext(Context context) {
+        if (Tools.context != null)
+            return;
+        Tools.context = context;
         pref = context.getSharedPreferences("pref", Context.MODE_PRIVATE);
     }
 
-    public static void createIns(Context context) {
-        if (ins == null)
-            ins = new Tools(context);
-    }
-
-    public static Tools getIns() {
-        return ins;
-    }
-
-    public void copy(final Note note) {
+    public static void copy(final Note note) {
         ClipboardManager clipboard = (ClipboardManager)
                 context.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("" + note.header, "" + note.toString());
@@ -58,7 +53,7 @@ public class Tools {
     }
 
     @SuppressLint("SetTextI18n")
-    public void askDialog(View.OnClickListener yes, View.OnClickListener no) {
+    public static void askDialog(Context context, View.OnClickListener yes, View.OnClickListener no) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         LayoutInflater inflater = LayoutInflater.from(context);
         PopupLayoutBinding binding = PopupLayoutBinding.inflate(inflater, null, false);
@@ -84,35 +79,37 @@ public class Tools {
         d.show();
     }
 
-    public String getCurrentDate() {
+    public static String getCurrentDate() {
         Date currentTime = Calendar.getInstance().getTime();
         @SuppressLint("SimpleDateFormat") SimpleDateFormat sm = new SimpleDateFormat("yyyy-MM-dd hh:mm");
         return sm.format(currentTime);
     }
 
-    public MutableLiveData<Integer> getCounter() {
+    public static MutableLiveData<Integer> getCounter() {
         return counter;
     }
 
-    public void checkOne(boolean isChecked) {
-        String c = "counter";
-        int newValue = pref.getInt(c, 0) + (isChecked ? 1 : -1);
-        Log.i(TAG, "checkOne: " + newValue);
-        @SuppressLint("CommitPrefEdits")
-        SharedPreferences.Editor edit = pref.edit();
-        counter.postValue(newValue);
-        edit.putInt(c, newValue);
-        edit.apply();
-        Log.i(TAG, "checkOne: after edit " + pref.getInt(c, 0));
+    public static void checkNote(Long id) {
+        if (isChecked.get(id) == null)
+            isChecked.put(id, true);
+        else
+            isChecked.remove(id);
+        int counter = getCounter().getValue() + (isChecked.get(id) != null ? 1 : -1);
+        getCounter().setValue(counter);
+        Log.i(TAG, "checkNote: " + counter);
     }
 
-    public void keepNote(Long id) {
+    public static boolean isChecked(Long id) {
+        return Boolean.TRUE.equals(Tools.isChecked.get(id));
+    }
+
+    public static void keepNote(Long id) {
         @SuppressLint("CommitPrefEdits") SharedPreferences.Editor edit = pref.edit();
         edit.putString("kept", id.toString());
         edit.apply();
     }
 
-    public Long getNoteId() {
+    public static Long getNoteId() {
         String out = pref.getString("kept", "0");
         keepNote(0L);
         if (out == null)
@@ -120,7 +117,7 @@ public class Tools {
         return Long.parseLong(out);
     }
 
-    public boolean isKept() {
+    public static boolean isKept() {
         return !pref.getString("kept", "0").equals("0");
     }
 }

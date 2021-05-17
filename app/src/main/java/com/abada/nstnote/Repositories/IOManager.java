@@ -11,7 +11,6 @@ import com.abada.nstnote.Utilities.Tools;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 public class IOManager {
     public final String TAG = this.getClass().getName();
@@ -19,12 +18,15 @@ public class IOManager {
     private final MyRoom room;
     private final NoteDao dao;
     public final MutableLiveData<List<Long>> insertedIds;
-    private LiveData<List<Note>> notes;
+    private final MutableLiveData<List<Note>> notes;
+    private final MutableLiveData<Note> note;
 
     private IOManager(Application application) {
         room = MyRoom.getInstance(application);
         dao = room.getDao();
         insertedIds = new MutableLiveData<>();
+        note = new MutableLiveData<>();
+        notes = new MutableLiveData<>();
     }
 
     public static IOManager getInstance(Application application) {
@@ -33,8 +35,9 @@ public class IOManager {
         return instance;
     }
 
-    public LiveData<List<Note>> getNotes(String query) {
-        return notes = dao.getAll(query);
+    public LiveData<List<Note>> getNotes() {
+        dao.getAll().observeForever(notes::setValue);
+        return notes;
     }
 
     public LiveData<List<Long>> insert(Note... notes) {
@@ -43,30 +46,20 @@ public class IOManager {
         return insertedIds;
     }
 
-    private void check(Note note) {
-        note.check();
-        insert(note);
-    }
-
     public void checkAll() {
-        Integer x = Tools.getIns().getCounter().getValue();
+        Integer x = Tools.getCounter().getValue();
         List<Note> showedNotes = notes.getValue();
         assert showedNotes != null;
         boolean allIsChecked = x == showedNotes.size();
         for (int i = 0; i < showedNotes.size(); i++)
             if (!showedNotes.get(i).isChecked() ^ allIsChecked)
-                checkAt(i);
-    }
-
-    public void checkAt(int index) {
-        check(notes.getValue().get(index));
+                showedNotes.get(i).check();
     }
 
     public void delete(Note... notes) {
         room.execute(() -> dao.delete(notes));
         for (Note note : notes) {
             if (note == null) continue;
-            Objects.requireNonNull(this.notes.getValue()).remove(note);
             if (note.isChecked())
                 note.check();
         }
@@ -86,7 +79,12 @@ public class IOManager {
         room.execute(dao::deleteAll);
     }
 
+    /**
+     * this way is better than returning live data from dao
+     * return live data is slow
+     */
     public LiveData<Note> getNoteById(long id) {
-        return dao.getNoteById(id);
+        room.execute(() -> note.postValue(dao.getNoteById(id)));
+        return note;
     }
 }

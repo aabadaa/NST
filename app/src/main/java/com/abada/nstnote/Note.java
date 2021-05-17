@@ -14,15 +14,8 @@ public class Note implements Serializable {
     @PrimaryKey(autoGenerate = true)
     public Long id;
     public String header = "";
-    public String body = "";
+    public String body;
     public String date;
-    public boolean checked = false;
-
-    @Ignore
-    public Note() {
-        setDate();
-    }
-
     @Ignore
     public Note(String body) {
         this.body = body;
@@ -49,8 +42,6 @@ public class Note implements Serializable {
         body = note.body;
         date = note.date;
         id = note.id;
-        checked = note.checked;
-
     }
 
     public Note(String header, String body, String date, long id) {
@@ -58,24 +49,27 @@ public class Note implements Serializable {
         this.date = date;
     }
 
-    public Note setDate() {
-        date = Tools.getIns().getCurrentDate();
-        return this;
+    public void setDate() {
+        date = Tools.getCurrentDate();
     }
 
     public boolean isChecked() {
-        return checked;
+        return Tools.isChecked(id);
     }
 
     public void check() {
-        checked = !checked;
-        Tools.getIns().checkOne(isChecked());
+        Tools.checkNote(id);
     }
 
     public boolean isEmpty() {
         return header.isEmpty() && body.isEmpty();
     }
 
+    public boolean contains(String str) {
+        return header.contains(str) || body.contains(str);
+    }
+
+    @NonNull
     @Override
     public String toString() {
         return "Note{" +
@@ -89,7 +83,7 @@ public class Note implements Serializable {
         if (!(other instanceof Note))
             return false;
         Note o = (Note) other;
-        return id != null && o.id != null && id.equals(o.id);
+        return id != null && id.equals(o.id);
     }
 
     public boolean equalsIgnoreDate(Note other) {

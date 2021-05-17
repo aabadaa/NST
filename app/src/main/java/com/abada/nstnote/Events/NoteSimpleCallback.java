@@ -55,14 +55,15 @@ public class NoteSimpleCallback extends ItemTouchHelper.SimpleCallback {
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
         int pos = viewHolder.getAdapterPosition();
+        NoteAdapter.NoteHolder holder = (NoteAdapter.NoteHolder) viewHolder;
         switch (direction) {
             case ItemTouchHelper.LEFT:
-                notesViewModel.checkAt(pos);
+                holder.note.check();
                 noteAdapter.notifyItemChanged(pos);
                 break;
             case ItemTouchHelper.RIGHT:
-                Note note = noteAdapter.getItem(pos);
-                Tools.getIns().copy(note);
+                Note note = noteAdapter.getItemByIndex(pos);
+                Tools.copy(note);
                 noteAdapter.notifyItemChanged(pos);
                 break;
         }

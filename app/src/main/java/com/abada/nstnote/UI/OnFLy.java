@@ -20,7 +20,9 @@ import com.abada.nstnote.databinding.PopupLayoutBinding;
 import java.util.List;
 
 import static androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory;
-import static com.abada.nstnote.Utilities.Tools.getIns;
+import static com.abada.nstnote.Utilities.Tools.getNoteId;
+import static com.abada.nstnote.Utilities.Tools.isKept;
+import static com.abada.nstnote.Utilities.Tools.keepNote;
 
 public abstract class OnFLy extends FrameLayout {
     PopupLayoutBinding binding;
@@ -40,7 +42,7 @@ public abstract class OnFLy extends FrameLayout {
         binding.cancel.setOnClickListener(v1 -> cancel());
         showHideKeyboard();
         viewModel = new AndroidViewModelFactory(application).create(NotesViewModel.class);
-        viewModel.getNoteById(getIns().isKept() ? getIns().getNoteId() : 0)
+        viewModel.getNoteById(isKept() ? getNoteId() : 0)
                 .observeForever(note -> {
                     if (note != null) {
                         binding.body.setText(note.body);
@@ -84,7 +86,7 @@ public abstract class OnFLy extends FrameLayout {
             LiveData<List<Long>> id = viewModel.edit(newNote, State.INSERT);
             if (!doPop) {
                 toastText = "Kept";
-                id.observeForever(list -> getIns().keepNote(list.get(0)));
+                id.observeForever(list -> keepNote(list.get(0)));
             }
         }
         doClose();

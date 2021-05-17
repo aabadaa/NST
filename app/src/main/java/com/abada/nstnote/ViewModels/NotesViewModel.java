@@ -1,42 +1,38 @@
 package com.abada.nstnote.ViewModels;
 
 import android.app.Application;
-import android.widget.Filter;
-import android.widget.Filterable;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.abada.nstnote.Note;
-import com.abada.nstnote.NoteAdapter;
 import com.abada.nstnote.Repositories.IOManager;
-import com.abada.nstnote.Utilities.NotesFilter;
 import com.abada.nstnote.Utilities.State;
 
 import java.util.List;
 
-public class NotesViewModel extends AndroidViewModel implements Filterable {
+public class NotesViewModel extends AndroidViewModel {
     private final String TAG = getClass().getName();
     private final IOManager iom;
-    private Filter filter;
-
+    private final MutableLiveData<String> query;
+    private Observer<List<Note>> observer;
 
     public NotesViewModel(Application application) {
         super(application);
         iom = IOManager.getInstance(application);
+        query = new MutableLiveData<>("");
     }
 
     public void deleteChecked() {
         iom.deleteChecked();
     }
 
-    public LiveData<List<Note>> getNotes(String query) {
-        return iom.getNotes(query);
+    public void getNotes(String query) {
+        iom.getNotes().observeForever(observer);
     }
 
-    public void checkAt(int index) {
-        iom.checkAt(index);
-    }
 
     public void checkALL() {
         iom.checkAll();
@@ -59,13 +55,14 @@ public class NotesViewModel extends AndroidViewModel implements Filterable {
         return iom.getNoteById(id);
     }
 
-    public void setNoteAdapter(NoteAdapter noteAdapter) {
-        filter = new NotesFilter(iom, noteAdapter);
+    public MutableLiveData<String> getFilterQuery() {
+        return query;
     }
 
-    @Override
-    public Filter getFilter() {
-        return filter;
+    public void observe(Observer<List<Note>> observer) {
+        this.observer = observer;
+        query.observeForever(this::getNotes);
+
     }
 
 }
